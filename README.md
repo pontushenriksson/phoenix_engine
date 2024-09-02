@@ -1,4 +1,4 @@
-# phoenix-engine
+# Phoenix Engine
 
 Phoenix är en simpel spelmotor skriven i programspråket Rust. Motorn nyttjar OpenGL bindningar för dess `rastrering` och Slint språket för dess gränsnitt. För oss är Phoenix ett perfekt projekt för att finslipa våra utvecklingskunskaper. Spelmotorn blir vårat gymnasiearbete på NTI Gymnasiet i Sundsvall 2024.
 
@@ -19,16 +19,15 @@ Under projektets gång kommer vi att lära oss mer om:
 ### Digitala resurser
 
 * [The Rust Book](https://doc.rust-lang.org/book/)
-* [OpenGL with Rust](https://rust-tutorials.github.io/learn-opengl/)
+* [Learn OpenGL](https://learnopengl.com/Getting-started/OpenGL)
 * [Slint](https://releases.slint.dev/)
 * [Proper Github Etiquette](https://betterprogramming.pub/git-workflow-etiquette-f22d96b8b0b8)
-* [Glutin](https://github.com/rust-windowing/glutin)
 
 #### Videor
 
-* [En bra serie av 'The Cherno' som täcker processen av att skapa en spelmotor från grunden.](https://youtube.com/playlist?list=PLlrATfBNZ98dC-V-N3m0Go4deliWHPFwT&si=VCfmACkznrGt7yWt)
-* [Fantastisk genomgång av 'The Rust Book'](https://youtube.com/playlist?list=PLai5B987bZ9CoVR-QEIN9foz4QCJ0H2Y8&si=6F9_wdnwF-yI-e8B)
-* [I tried learning OpenGL in 7 days - using Rust](https://www.youtube.com/watch?v=KEQIWqSq42k)
+* [En bra serie som täcker grunderna och principerna av att skapa en spelmotor (TheCherno)](https://youtube.com/playlist?list=PLlrATfBNZ98dC-V-N3m0Go4deliWHPFwT&si=VCfmACkznrGt7yWt)
+* [Fantastisk genomgång av 'The Rust Book' (Let's Get Rusty)](https://youtube.com/playlist?list=PLai5B987bZ9CoVR-QEIN9foz4QCJ0H2Y8&si=6F9_wdnwF-yI-e8B)
+* [Underskattad resurs för OpenGL programmering i C++ (VictorGordan)](https://www.youtube.com/@VictorGordan/)
 
 ## Funktioner
 
