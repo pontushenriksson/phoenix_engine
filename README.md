@@ -14,7 +14,7 @@ Under projektets gång kommer vi att lära oss mer om:
 
 ### Fysiska resurser
 
-- Eventuella fysiska böcker köpta själva eller lånade på Kulturmagasiner.
+* [Elementary Linear Algebra 10th Edition, with supplemental applications (Howard Anton, Chris Rorres)](https://books.google.se/books/about/Elementary_Linear_Algebra_with_Supplemen.html?id=I8GNPgAACAAJ&redir_esc=y)
 
 ### Digitala resurser
 
