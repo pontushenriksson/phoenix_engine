@@ -44,20 +44,3 @@ Under projektets gång kommer vi att lära oss mer om:
 * Node-system för entiteter
 * Skriptmotor med [The Lotus Programming Language](https://github.com/totem-studios/lotus)
 * Animationsmotor
-
-## Projektstruktur
-
-phoenix_engine/
-├── phoenix_core/           # The core engine as a library
-│   ├── src/
-│   │   ├── lib.rs          # All rendering, fysik, input, mm.
-│   └── Cargo.toml          # Definerar kärnan som ett Rust library (crate)
-├── phoenix/                # Applikationen (standalone application)
-│   ├── src/
-│   │   ├── main.rs         # Phoenix som applikation
-│   └── Cargo.toml          # Definerar applikationen som en binary crate
-└── phoenix_projects/       # Mapp för projekt gjorda med phoenix
-    ├── phoenix-test-game/
-    │   ├── src/
-    │   │   ├── script.rs   # Spel logik (spelprojekt som använder phoenix_core som ett bibliotek)
-    │   └── Cargo.toml      # Separat spelprojekt, phoenix_core som en dependency
