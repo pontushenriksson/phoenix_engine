@@ -1,3 +1,13 @@
+// use core::*;
+
 fn main() {
-    println!("Hello, world!");
+    // let mut engine: PhoenixEngine = core::Engine::new();
+
+    /*
+    
+    engine.run(|| {
+        script::update();
+    });
+    
+     */
 }

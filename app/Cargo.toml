@@ -12,6 +12,7 @@ slint = "1.7.2"
 glfw = "0.58.0"
 chrono = "0.4.38"
 cgmath = "0.18.0"
+# core = { path = "../core" }
 
 [build-dependencies]
 slint-build = "1.7.2"
