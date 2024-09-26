@@ -2,12 +2,108 @@ pub mod vertices;
 pub mod indices;
 pub mod shaders;
 pub mod logging;
+pub mod bindings;
+pub mod renderer;
+pub mod scene;
 
 use shaders::*;
 use vertices::*;
 use indices::*;
+use renderer::*;
+use scene::*;
 
-use glfw::{Action, Context, Key};
+use glfw::{Glfw, Action, Context, Key, GlfwReceiver, WindowEvent};
+use core::ffi::c_void;
+
+pub struct PhoenixEngine {
+  glfw: Glfw,
+  window: glfw::PWindow,
+  events: GlfwReceiver<(f64, WindowEvent)>,
+
+  state: u32,
+ 
+  renderer: Renderer,
+  
+  /*
+  physics: PhysicsEngine,
+  input_manager: InputManager,
+  */
+}
+
+impl PhoenixEngine {
+  pub fn new() -> PhoenixEngine {
+    let mut glfw = glfw::init(glfw::fail_on_errors).unwrap();
+
+    let (mut window, events) = match glfw.create_window(600, 600, "Phoenix Engine v0.1.0", glfw::WindowMode::Windowed) {
+        Some(reciever) => {
+            println!("GLFW Window created successfully.\n");
+            reciever
+        }
+        None => {
+            panic!("Failed to create GLFW Window.\n");
+        }
+    };
+
+    window.set_key_polling(true);
+    window.set_framebuffer_size_polling(true);
+    window.make_current();
+
+    gl::load_with(|s| window.get_proc_address(s) as *const _);
+
+    let version = unsafe { std::ffi::CStr::from_ptr(gl::GetString(gl::VERSION) as *const i8) };
+    println!("OpenGL version: {}", version.to_str().unwrap());
+
+    PhoenixEngine {
+        glfw,
+        window,
+        events,
+        state: 0,
+        
+        renderer: Renderer::new(),
+    }
+  }
+
+  pub fn run<F: FnMut()>(&mut self, mut logic: F)  {
+    while !self.window.should_close() {
+      // self.input_manager.recv();
+      // self.physics_system.update();
+      // self.renderer.render();
+
+      self.glfw.poll_events();
+
+      logic();
+
+      for (_, event) in glfw::flush_messages(&self.events) {
+        handle_window_event(&mut self.window, event);
+      }
+
+      self.renderer.render();
+      
+      // Poll events
+      
+      self.window.swap_buffers();
+    }
+  }
+
+  pub fn clean(&mut self) {
+    // renderer.clean();
+    /*
+    
+    vbo.unbind();
+    vao.unbind();
+    ibo.unbind();
+    ShaderProgram::unbind(); // Maybe change to shader_program.unbind(); later?
+
+    unsafe {
+        gl::DeleteVertexArrays(1, &vao.id);
+        gl::DeleteBuffers(1, &vbo.id);
+        gl::DeleteBuffers(1, &ibo.id);
+        gl::DeleteProgram(shader_program.program_handle);
+    }
+
+     */
+  }
+}
 
 fn handle_window_event(window: &mut glfw::Window, event: glfw::WindowEvent) {
     match event {
@@ -30,29 +126,6 @@ fn check_gl_error() {
             println!("OpenGL error: {:?}", error);
         }
     }
-}
-
-fn init_engine() {
-    let mut glfw = glfw::init(glfw::fail_on_errors).unwrap();
-
-    let (mut window, events) = match glfw.create_window(600, 600, "Phoenix Engine v0.1.0", glfw::WindowMode::Windowed) {
-        Some(reciever) => {
-            println!("GLFW Window created successfully.\n");
-            reciever
-        }
-        None => {
-            panic!("Failed to create GLFW Window.\n");
-        }
-    };
-
-    window.set_key_polling(true);
-    window.set_framebuffer_size_polling(true);
-    window.make_current();
-
-    gl::load_with(|s| window.get_proc_address(s) as *const _);
-    
-    let version = unsafe { std::ffi::CStr::from_ptr(gl::GetString(gl::VERSION) as *const i8) };
-    println!("OpenGL version: {}", version.to_str().unwrap());
 }
 
 #[cfg(test)]
@@ -112,7 +185,6 @@ mod tests {
             }
             None => {
                 panic!("Failed to create GLFW Window.\n");
-                return;
             }
         };
 
