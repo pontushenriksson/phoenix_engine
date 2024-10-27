@@ -1,12 +1,12 @@
 // ui.rs
 use egui_glfw_gl as egui_backend;
 
-pub struct UI {
+pub struct PhoenixUi {
   egui_context: egui::Context,
   egui_renderer: egui_backend::Renderer, // or any compatible backend
 }
 
-impl UI {
+impl PhoenixUi {
   pub fn new() -> Self {
     // Initialize Egui context and renderer
     Self {

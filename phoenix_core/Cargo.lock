@@ -715,6 +715,8 @@ dependencies = [
  "glfw",
  "gltf",
  "image",
+ "log",
+ "rayon",
 ]
 
 [[package]]
