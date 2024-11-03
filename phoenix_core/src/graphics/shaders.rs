@@ -86,7 +86,7 @@ impl ShaderProgram {
     }
   }
 
-  /// Activate shader program
+  /// Activate/use shader program
   pub fn bind(&self) {
     unsafe {
       gl::UseProgram(self.id);
@@ -116,6 +116,36 @@ impl ShaderProgram {
     }
   }
 
+  pub fn set_uniform_bool(
+    &self,
+    uniform_name: &str,
+    value: bool
+  ) {
+    unsafe {
+      gl::Uniform1i(self.uniform_indexes[uniform_name], value as i32);
+    }
+  }
+
+  pub fn set_uniform_i32(
+    &self,
+    uniform_name: &str,
+    value: i32
+  ) {
+    unsafe {
+      gl::Uniform1i(self.uniform_indexes[uniform_name], value);
+    }
+  }
+
+  pub fn set_uniform_f32(
+    &self,
+    uniform_name: &str,
+    value: f32
+  ) {
+    unsafe {
+      gl::Uniform1f(self.uniform_indexes[uniform_name], value);
+    }
+  }
+
   pub fn set_uniform_4_f32_vec(
     &self, uniform_name: &str,
     v0: gl::types::GLfloat,
@@ -124,18 +154,21 @@ impl ShaderProgram {
     v3: gl::types::GLfloat
   ) {
     unsafe {
-      gl::Uniform4f(self.uniform_indexes[uniform_name], v0, v1,v2, v3);            
+      gl::Uniform4f(self.uniform_indexes[uniform_name], v0, v1, v2, v3);            
     }
   }
 
-  pub fn set_uniform_matrix_4_f32_vec(&self, uniform_name: &str, matrix: &cgmath::Matrix4<f32>) {
+  pub fn set_uniform_matrix_4_f32_vec(
+    &self, uniform_name: &str, 
+    matrix: &cgmath::Matrix4<f32>
+  ) {
     unsafe {
       gl::UniformMatrix4fv(
         self.uniform_indexes[uniform_name],
         1,
         gl::FALSE,
         matrix.as_ptr(),
-      )            
+      )           
     }
   }
 }

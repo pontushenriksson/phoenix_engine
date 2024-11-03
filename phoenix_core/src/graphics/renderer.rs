@@ -250,8 +250,6 @@ impl PhoenixRenderer {
   }
 }
 
-
-
 fn check_gl_error() {
   unsafe {
     let error = gl::GetError();
