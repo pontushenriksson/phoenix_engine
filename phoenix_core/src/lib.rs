@@ -17,6 +17,10 @@ pub mod assets {
     pub mod loader;
 }
 
+pub mod ecs {
+    pub mod components;
+}
+
 fn act() {
     println!("Act!");
 }
@@ -38,7 +42,7 @@ mod tests {
         
         // map events to functionallity.
 
-        // engine.register_fn_for_event(event::KeyPress::W, script::player_move);
+        
         
         engine.run(|| {
             // foo();

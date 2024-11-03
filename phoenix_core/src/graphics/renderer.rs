@@ -4,6 +4,7 @@ use std::mem;
 use std::ffi::c_void;
 
 use crate::graphics::shaders;
+use crate::ecs::components::{self, Texture};
 
 use super::shaders::ShaderProgram;
 
@@ -175,15 +176,17 @@ impl PhoenixRenderer {
   }
 
   pub fn render(&mut self) /* -> PhoenixDebugInfo<()> */ {
-    let data: [f32; 21] = [
-    // Vertices                 Colors
-       0.5, -0.5, 0.0,          1.0, 0.0, 0.0, 1.0,
-      -0.5, -0.5, 0.0,          0.0, 1.0, 0.0, 1.0,
-       0.0,  0.5, 0.0,          0.0, 0.0, 1.0, 1.0,
+    let data: [f32; 36] = [
+    // Vertices                  Colors                      Texture coordinates
+       0.5,  0.5,  0.0,          1.0, 0.0, 0.0, 1.0,         1.0, 1.0, // Top right
+       0.5, -0.5,  0.0,          0.0, 1.0, 0.0, 1.0,         1.0, 0.0, // Bottom right
+      -0.5, -0.5,  0.0,          0.0, 0.0, 1.0, 1.0,         0.0, 0.0, // Bottom left
+      -0.5,  0.5,  0.0,          1.0, 1.0, 0.0, 1.0,         0.0, 1.0, // Top left
     ];
 
-    let indices: [u32; 3] = [
-      0, 1, 2,
+    let indices: [u32; 6] = [
+      0, 1, 3,
+      1, 2, 3,
     ];
 
     let vao: VertexArrayObject = VertexArrayObject::new();
@@ -199,12 +202,16 @@ impl PhoenixRenderer {
 
     ebo.store_u32_data(&indices);
 
+    let mut texture = Texture::load_from_file("./assets/textures/chisel.png", gl::TEXTURE_2D, gl::RGBA)
+      .expect("Failed to load texture!");
+      // .into_mipmap(gl::LINEAR_MIPMAP_LINEAR);
+
     let pos_v_attrib: VertexAttribute = VertexAttribute::new(
       0,
       3,
       gl::FLOAT,
       gl::FALSE,
-      7 * mem::size_of::<gl::types::GLfloat>() as gl::types::GLsizei, // aPos (vec3) + aColor (vec4)
+      9 * mem::size_of::<gl::types::GLfloat>() as gl::types::GLsizei, // aPos (vec3) + aColor (vec4) + aTexCoord (vec2)
       0 as *const c_void,
     );
 
@@ -215,11 +222,22 @@ impl PhoenixRenderer {
       4,
       gl::FLOAT,
       gl::FALSE,
-      7 * mem::size_of::<gl::types::GLfloat>() as gl::types::GLsizei, // aPos (vec3) + aColor (vec4)
+      9 * mem::size_of::<gl::types::GLfloat>() as gl::types::GLsizei, // aPos (vec3) + aColor (vec4) + aTexCoord (vec2)
       (3 * mem::size_of::<gl::types::GLfloat>()) as *const c_void,
     );
 
     color_v_attrib.enable();
+
+    let texture_v_attrib: VertexAttribute = VertexAttribute::new(
+      2,
+      2,
+      gl::FLOAT,
+      gl::FALSE,
+      9 * mem::size_of::<gl::types::GLfloat>() as gl::types::GLsizei, // aPos (vec3) + aColor (vec4) + aTexCoord (vec2)
+      (7 * mem::size_of::<gl::types::GLfloat>()) as *const c_void,
+    );
+
+    texture_v_attrib.enable();
 
     let mut shader_program: ShaderProgram = ShaderProgram::new("./shaders/default.vert", "./shaders/default.frag");
     shader_program.bind();
@@ -242,7 +260,7 @@ impl PhoenixRenderer {
 
       vao.bind();
 
-      gl::DrawElements(gl::TRIANGLES, 3, gl::UNSIGNED_INT, std::ptr::null()); // Last arg is an offset or index array (when not using indices)
+      gl::DrawElements(gl::TRIANGLES, 6, gl::UNSIGNED_INT, std::ptr::null()); // Last arg is an offset or index array (when not using indices)
       check_gl_error();
 
       VertexArrayObject::unbind();

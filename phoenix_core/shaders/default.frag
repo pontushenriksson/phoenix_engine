@@ -1,8 +1,9 @@
-#version 330 core
-out vec4 FragColor;
-in vec4 vertexColor;
+#version 330 core // 460
 
-// uniform vec4 aTextCoord; // we set this variable in the OpenGL code.
+out vec4 FragColor;
+
+in vec4 vertexColor;
+in vec2 texCoord;
 
 /*
 
@@ -12,7 +13,9 @@ which is the cause for several frustrating errors; keep this in mind!
 
 */
 
+uniform sampler2D Texture;
+
 void main()
 {
-  FragColor = vertexColor; // vec3(R, G, B, 1.0)
+  FragColor = texture(Texture, texCoord); // * vertexColor; // vec3(R, G, B, 1.0)
 }
