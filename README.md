@@ -10,7 +10,7 @@ Under projektets gång kommer vi att lära oss mer om:
 2. Grafisk programmering med OpenGL och Slint.
 3. Korrekt användning av GitHub issues, pull requests, merge requests och commits.
 
-:copyright: [Neo Mannskär](https://github.com/neomannskar) & [Pontus Henriksson](https://github.com/pontushenriksson)
+Copyright © 2024 [Neo Mannskär](https://github.com/neomannskar) & [Pontus Henriksson](https://github.com/pontushenriksson)
 
 ## Resurser
 
