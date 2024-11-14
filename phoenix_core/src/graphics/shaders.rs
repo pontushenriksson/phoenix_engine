@@ -3,6 +3,7 @@ use cgmath::Matrix;
 
 pub struct ShaderProgram {
   id: gl::types::GLuint,
+  idx: u32, // Change later, the index in the Vec<ShaderProgram>
   uniform_indexes: HashMap<String, gl::types::GLint>,
 }
 
@@ -15,7 +16,7 @@ impl ShaderProgram {
       .unwrap_or_else(|e| panic!("Failed to open {}\n\terr| {}", vertex_shader_path, e));
 
     let mut vertex_shader_source = String::new();
-    let mut fragment_shader_source = String::new();   
+    let mut fragment_shader_source = String::new();
     
     vertex_shader_file
       .read_to_string(&mut vertex_shader_source)
@@ -80,6 +81,7 @@ impl ShaderProgram {
       gl::DeleteShader(fragment_shader);
 
       ShaderProgram {
+        idx: 0, // Change later
         id: program_handle,
         uniform_indexes: HashMap::new(),
       }

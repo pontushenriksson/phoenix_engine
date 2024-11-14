@@ -12,11 +12,13 @@ use std::mem;
 
 use crate::events::events;
 use crate::graphics::renderer;
+use crate::debugger::debugger::*;
 use crate::graphics::{self, renderer::*, shaders::ShaderProgram};
 use crate::assets::loader;
 use crate::ecs::components::Texture2D;
 
-pub struct PhoenixEngine {
+pub struct PhoenixEngine<T, E> {
+  debugger: PhoenixDebugger<T, E>,
   window: glfw::PWindow, // Window manager
   renderer: graphics::renderer::PhoenixRenderer,
   events: events::EventHandler,
@@ -24,10 +26,19 @@ pub struct PhoenixEngine {
   delta_time: f32,
   // event_handler: events::Handler,
   // state: u32,
+  textures: Vec<Texture2D>, // Change to general 'Texture' later
+  shaders: Vec<ShaderProgram>,
+  static_objects: Vec<StaticGameObject>
+
+  // render_que: RenderQue,
 }
 
-impl PhoenixEngine {
-  pub fn new(window_width: u32, window_height: u32, title: &str /* "Phoenix Engine v0.1.0" */) -> Box<PhoenixEngine> {
+impl<T, E> PhoenixEngine<T, E>
+where
+    T: std::fmt::Debug,
+    E: std::fmt::Debug,
+{
+  pub fn new(window_width: u32, window_height: u32, title: &str /* "Phoenix Engine v0.1.0" */, icon_path: &str) -> Box<PhoenixEngine<T, E>> {
     let mut glfw: Glfw = glfw::init(glfw::fail_on_errors).unwrap();
 
     glfw.window_hint(glfw::WindowHint::Resizable(true));
@@ -54,7 +65,11 @@ impl PhoenixEngine {
     let version = unsafe { std::ffi::CStr::from_ptr(gl::GetString(gl::VERSION) as *const i8) };
     println!("OpenGL version: {}", version.to_str().unwrap());
 
-    let icon = image::open("../assets/icons/icon.png").unwrap();
+    let icon = match image::open(icon_path) {
+      Ok(icon) => icon,
+      Err(e) => { panic!("Failed to open path to icon: {} \n\terr| {}", icon_path, e) }
+    };
+
     let (width, height) = icon.dimensions();
 
     let icon_pixels = rgba_u8_as_u32(icon.to_rgba8().into_raw());
@@ -77,11 +92,19 @@ impl PhoenixEngine {
     let events: events::EventHandler = events::EventHandler::new(glfw, receiver);
 
     Box::new(PhoenixEngine {
+      debugger: PhoenixDebugger::new(
+        DebuggerRunningMode::Accumulate(
+          DebuggerOutputMode::Terminal
+        )
+      ),
       window: window,
       renderer: renderer,
       events: events,
       last_frame: Instant::now(),
       delta_time: 0.0,
+      textures: vec![],
+      shaders: vec![],
+      static_objects: vec![],
     })
   }
 
@@ -93,78 +116,19 @@ impl PhoenixEngine {
   }
 
   pub fn run<F: FnMut()>(&mut self, mut logic: F) /* -> Result<PhoenixLogPath, Vec<ErrorMessage>> */ {  
+    self.debugger.set_mode(DebuggerRunningMode::Accumulate(DebuggerOutputMode::File));
+    
     let mut nr_attributes: i32 = 0;
     unsafe { gl::GetIntegerv(gl::MAX_VERTEX_ATTRIBS, &mut nr_attributes); }
     println!("Maximum number of vertex attributes (input variable for the vertex shader) supported: {} 4-component vertex attributes available", nr_attributes);
-    
-    let data: [f32; 36] = [
-    // Vertices                  Colors                      Texture coordinates
-       0.5,  0.5,  0.0,          1.0, 0.0, 0.0, 1.0,         1.0, 1.0, // Top right
-       0.5, -0.5,  0.0,          0.0, 1.0, 0.0, 1.0,         1.0, 0.0, // Bottom right
-      -0.5, -0.5,  0.0,          0.0, 0.0, 1.0, 1.0,         0.0, 0.0, // Bottom left
-      -0.5,  0.5,  0.0,          1.0, 1.0, 0.0, 1.0,         0.0, 1.0, // Top left
-    ];
+    self.debugger.info(format!("Maximum number of vertex attributes (input variable for the vertex shader) supported: {} 4-component vertex attributes available", nr_attributes));
 
-    let indices: [u32; 6] = [
-      0, 1, 3,
-      1, 2, 3,
-    ];
-
-    let vao: VertexArrayObject = VertexArrayObject::new();
-    vao.bind();
-
-    let vbo: VertexBufferObject = VertexBufferObject::new(gl::ARRAY_BUFFER, gl::STATIC_DRAW);
-    vbo.bind();
-    
-    vbo.store_f32_data(&data);
-
-    let ebo: ElementBufferObject = ElementBufferObject::new(gl::ELEMENT_ARRAY_BUFFER, gl::STATIC_DRAW);
-    ebo.bind();
-
-    ebo.store_u32_data(&indices);
-
-    let texture = Texture2D::new("../assets/textures/goofy.jpg");
-
-    texture.bind();
-
+    self.debugger.info("ddasda");
     // texture.into_mipmap();
-
-    let pos_v_attrib: VertexAttribute = VertexAttribute::new(
-      0,
-      3,
-      gl::FLOAT,
-      gl::FALSE,
-      9 * mem::size_of::<gl::types::GLfloat>() as gl::types::GLsizei, // aPos (vec3) + aColor (vec4) + aTexCoord (vec2)
-      0 as *const c_void,
-    );
-
-    let color_v_attrib: VertexAttribute = VertexAttribute::new(
-      1,
-      4,
-      gl::FLOAT,
-      gl::FALSE,
-      9 * mem::size_of::<gl::types::GLfloat>() as gl::types::GLsizei, // aPos (vec3) + aColor (vec4) + aTexCoord (vec2)
-      (3 * mem::size_of::<gl::types::GLfloat>()) as *const c_void,
-    );
-
-    let texture_v_attrib: VertexAttribute = VertexAttribute::new(
-      2,
-      2,
-      gl::FLOAT,
-      gl::FALSE,
-      9 * mem::size_of::<gl::types::GLfloat>() as gl::types::GLsizei, // aPos (vec3) + aColor (vec4) + aTexCoord (vec2)
-      (7 * mem::size_of::<gl::types::GLfloat>()) as *const c_void,
-    );
-
-    pos_v_attrib.enable();
-    color_v_attrib.enable();
-    texture_v_attrib.enable();
-
-    let mut shader_program: ShaderProgram = ShaderProgram::new("./shaders/default.vert", "./shaders/default.frag");
     
     // shader_program.create_uniform("tex0");
-
-    shader_program.bind();
+    
+    // self.shaders.get(0).unwrap().bind(); // Change later to be a selected shader
 
     while !self.window.should_close() {
       self.events.handle(&mut self.window);
@@ -190,12 +154,8 @@ impl PhoenixEngine {
         
         gl::Clear(gl::COLOR_BUFFER_BIT);
         // check_gl_error();
-  
-        vao.bind();
-        shader_program.bind();
-  
-        gl::DrawElements(gl::TRIANGLES, 6, gl::UNSIGNED_INT, std::ptr::null()); // Last arg is an offset or index array (when not using indices)
-        check_gl_error();
+
+        self.static_objects.get(0).unwrap().render(&self.textures, &self.shaders);
   
         VertexArrayObject::unbind();
       }
@@ -216,16 +176,52 @@ impl PhoenixEngine {
   }
 }
 
-fn display() {
-  /*
-  gl::Clear(gl::DEPTH_BUFFER_BIT);
-  check_gl_error();
+/*
 
-  gl::Clear(gl::COLOR_BUFFER_BIT);
-  check_gl_error();
-  */
+pub struct Query<Tuple> {
 
-  // self.window.swap_buffers();
+}
+
+*/
+
+pub enum Resource {
+  Shader(ShaderProgram),
+  Texture(Texture2D), // Add 1D and 3D later
+  // Mesh(Mesh),
+  // Component(Component)
+}
+
+impl<T, E> PhoenixEngine<T, E>
+where
+    T: std::fmt::Debug,
+    E: std::fmt::Debug,
+{
+  pub fn create_texture2D(path: &str) -> Resource {
+    Resource::Texture(Texture2D::new(path))
+  }
+  
+  pub fn create_shader(vert_path: &str, frag_path: &str) -> Resource {
+    Resource::Shader(ShaderProgram::new(vert_path, frag_path))
+  }
+  
+  pub fn add_resource(&mut self, resource: Resource) {
+    match resource {
+      Resource::Shader(program) => self.shaders.push(program),
+      Resource::Texture(texture) => self.textures.push(texture)
+      // _ => println!("Resource not implemented!")
+    }
+  }
+
+  pub fn new_static_object(&mut self, vertices: Vec<f32>, indices: Vec<u32>, texture: usize, shader_program: usize) {
+    self.static_objects.push(
+      StaticGameObject::new(
+        vertices, 
+        indices, 
+        texture,
+        shader_program
+      )
+    );
+  }
 }
 
 fn rgba_u8_as_u32(rgba_data: Vec<u8>) -> Vec<u32> {
@@ -257,3 +253,5 @@ fn check_gl_error() {
     }
   }
 }
+
+

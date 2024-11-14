@@ -83,9 +83,10 @@ impl VertexBufferObject {
 }
 
 pub struct ElementBufferObject {
-    id: gl::types::GLuint,
-    r#type: gl::types::GLenum,
-    usage: gl::types::GLenum,
+  size: isize,
+  id: gl::types::GLuint,
+  r#type: gl::types::GLenum,
+  usage: gl::types::GLenum,
 }
 
 impl ElementBufferObject {
@@ -95,7 +96,7 @@ impl ElementBufferObject {
             gl::GenBuffers(1, &mut id);
         }
 
-        ElementBufferObject { id, r#type, usage }
+        ElementBufferObject { size: 0, id, r#type, usage }
     }
 
     pub fn bind(&self) {
@@ -110,15 +111,16 @@ impl ElementBufferObject {
         }
     }
 
-    pub fn store_u32_data(&self, data: &[u32]) {
-        unsafe {
-            gl::BufferData(
-                self.r#type,
-                (data.len() * mem::size_of::<gl::types::GLfloat>()) as gl::types::GLsizeiptr,
-                &data[0] as *const u32 as *const c_void,
-                self.usage,
-            )
-        }
+    pub fn store_u32_data(&mut self, data: &[u32]) {
+      self.size = (data.len() * mem::size_of::<gl::types::GLfloat>()) as gl::types::GLsizeiptr;
+      unsafe {
+          gl::BufferData(
+              self.r#type,
+              self.size,
+              &data[0] as *const u32 as *const c_void,
+              self.usage,
+          )
+      }
     }
 }
 
@@ -166,46 +168,41 @@ pub struct PhoenixRenderer {
   
 }
 
-impl PhoenixRenderer {
-  pub fn new() -> PhoenixRenderer {
-    
-    
-    PhoenixRenderer {
+/// Temporary game object for testing
 
-    }
-  }
+pub struct StaticGameObject {
+  vertices: Vec<f32>,
+  indices: Vec<u32>,
+  texture: usize,
+  vao: VertexArrayObject,
+  vbo: VertexBufferObject,
+  ebo: ElementBufferObject,
+  vap: Vec<VertexAttribute>,
+  shader_program: usize,
+}
 
-  pub fn render(&mut self) /* -> PhoenixDebugInfo<()> */ {
-    let data: [f32; 36] = [
-    // Vertices                  Colors                      Texture coordinates
-       0.5,  0.5,  0.0,          1.0, 0.0, 0.0, 1.0,         1.0, 1.0, // Top right
-       0.5, -0.5,  0.0,          0.0, 1.0, 0.0, 1.0,         1.0, 0.0, // Bottom right
-      -0.5, -0.5,  0.0,          0.0, 0.0, 1.0, 1.0,         0.0, 0.0, // Bottom left
-      -0.5,  0.5,  0.0,          1.0, 1.0, 0.0, 1.0,         0.0, 1.0, // Top left
-    ];
-
-    let indices: [u32; 6] = [
-      0, 1, 3,
-      1, 2, 3,
-    ];
-
+impl StaticGameObject {
+  pub fn new(
+    vertices: Vec<f32>,
+    indices: Vec<u32>,
+    texture: usize,
+    shader_program: usize,
+  ) -> StaticGameObject {
     let vao: VertexArrayObject = VertexArrayObject::new();
     vao.bind();
 
     let vbo: VertexBufferObject = VertexBufferObject::new(gl::ARRAY_BUFFER, gl::STATIC_DRAW);
     vbo.bind();
-    
-    vbo.store_f32_data(&data);
 
-    let ebo: ElementBufferObject = ElementBufferObject::new(gl::ELEMENT_ARRAY_BUFFER, gl::STATIC_DRAW);
+    vbo.store_f32_data(vertices.as_slice());
+
+    let mut ebo: ElementBufferObject = ElementBufferObject::new(gl::ELEMENT_ARRAY_BUFFER, gl::STATIC_DRAW);
     ebo.bind();
 
-    ebo.store_u32_data(&indices);
+    ebo.store_u32_data(indices.as_slice());
 
-    let texture = Texture2D::new("./assets/textures/goofy.jpg");
-    
-    texture.bind();
-
+    // Change these attributes later
+    // They should maybe be choose-able
     let pos_v_attrib: VertexAttribute = VertexAttribute::new(
       0,
       3,
@@ -214,8 +211,6 @@ impl PhoenixRenderer {
       9 * mem::size_of::<gl::types::GLfloat>() as gl::types::GLsizei, // aPos (vec3) + aColor (vec4) + aTexCoord (vec2)
       0 as *const c_void,
     );
-
-    pos_v_attrib.enable();
 
     let color_v_attrib: VertexAttribute = VertexAttribute::new(
       1,
@@ -226,8 +221,6 @@ impl PhoenixRenderer {
       (3 * mem::size_of::<gl::types::GLfloat>()) as *const c_void,
     );
 
-    color_v_attrib.enable();
-
     let texture_v_attrib: VertexAttribute = VertexAttribute::new(
       2,
       2,
@@ -237,38 +230,51 @@ impl PhoenixRenderer {
       (7 * mem::size_of::<gl::types::GLfloat>()) as *const c_void,
     );
 
+    pos_v_attrib.enable();
+    color_v_attrib.enable();
     texture_v_attrib.enable();
 
-    let mut shader_program: ShaderProgram = ShaderProgram::new("./shaders/default.vert", "./shaders/default.frag");
-    
-    // shader_program.create_uniform("tex0");
-
-    shader_program.bind();
-
-    unsafe {
-      // Wireframe mode
-      // gl::PolygonMode(gl::FRONT_AND_BACK, gl::LINE);
-
-      // Regular mode
-      gl::PolygonMode(gl::FRONT_AND_BACK, gl::FILL);
-
-      gl::ClearColor(0.0, 0.0, 0.0, 0.4);
-      check_gl_error();
-
-      gl::Clear(gl::DEPTH_BUFFER_BIT);
-      check_gl_error();
-      
-      gl::Clear(gl::COLOR_BUFFER_BIT);
-      check_gl_error();
-
-      vao.bind();
-      shader_program.bind();
-
-      gl::DrawElements(gl::TRIANGLES, 6, gl::UNSIGNED_INT, std::ptr::null()); // Last arg is an offset or index array (when not using indices)
-      check_gl_error();
-
-      VertexArrayObject::unbind();
+    StaticGameObject {
+      vertices: vertices,
+      indices: indices,
+      vao: vao,
+      vbo: vbo,
+      ebo: ebo,
+      vap: vec![pos_v_attrib, color_v_attrib, texture_v_attrib],
+      shader_program: shader_program,
+      texture: texture,
     }
+  }
+
+  pub fn render(&self, textures: &Vec<Texture2D>, shaders: &Vec<ShaderProgram>) {
+    // bind texture
+    textures.get(self.texture).unwrap().bind();
+
+    // bind vao (vbo & ebo get included there)
+    self.vao.bind();
+
+    // bind its shader
+    shaders.get(self.shader_program).unwrap().bind();
+    
+    // call/forward draw calls
+    unsafe {
+      gl::DrawElements(gl::TRIANGLES, self.ebo.size as i32, gl::UNSIGNED_INT, std::ptr::null()); // Last arg is an offset or index array (when not using indices)
+      check_gl_error();
+    }
+  }
+}
+
+impl PhoenixRenderer {
+  pub fn new() -> PhoenixRenderer {
+    
+    
+    PhoenixRenderer {
+
+    }
+  }
+
+  pub fn render(&mut self) /* -> PhoenixDebugInfo<()> */ {
+    
   }
 }
 
@@ -279,8 +285,4 @@ fn check_gl_error() {
       println!("OpenGL error: {:?}", error);
     }
   }
-}
-
-pub struct RenderableMesh {
-  // Contains OpenGL/GPU-specific data.
 }

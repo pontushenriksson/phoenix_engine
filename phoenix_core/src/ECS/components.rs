@@ -73,6 +73,7 @@ impl Texture2D {
     }
   }
 }
+
 /*
 
 impl Texture {
@@ -162,4 +163,16 @@ impl Texture {
 
   }
 }
+
+*/
+
+// Later:
+
+/*
+
+pub struct GameObject {
+  id: u32,
+  components: HashMap<TypeId, Box<dyn Any>>, // store components dynamically
+}
+
 */
