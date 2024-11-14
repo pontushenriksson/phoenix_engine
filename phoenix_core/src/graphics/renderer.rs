@@ -4,7 +4,7 @@ use std::mem;
 use std::ffi::c_void;
 
 use crate::graphics::shaders;
-use crate::ecs::components::{self, Texture};
+use crate::ecs::components::Texture2D;
 
 use super::shaders::ShaderProgram;
 
@@ -202,9 +202,9 @@ impl PhoenixRenderer {
 
     ebo.store_u32_data(&indices);
 
-    let mut texture = Texture::load_from_file("./assets/textures/chisel.png", gl::TEXTURE_2D, gl::RGBA)
-      .expect("Failed to load texture!");
-      // .into_mipmap(gl::LINEAR_MIPMAP_LINEAR);
+    let texture = Texture2D::new("./assets/textures/goofy.jpg");
+    
+    texture.bind();
 
     let pos_v_attrib: VertexAttribute = VertexAttribute::new(
       0,
@@ -240,6 +240,9 @@ impl PhoenixRenderer {
     texture_v_attrib.enable();
 
     let mut shader_program: ShaderProgram = ShaderProgram::new("./shaders/default.vert", "./shaders/default.frag");
+    
+    // shader_program.create_uniform("tex0");
+
     shader_program.bind();
 
     unsafe {
@@ -259,6 +262,7 @@ impl PhoenixRenderer {
       check_gl_error();
 
       vao.bind();
+      shader_program.bind();
 
       gl::DrawElements(gl::TRIANGLES, 6, gl::UNSIGNED_INT, std::ptr::null()); // Last arg is an offset or index array (when not using indices)
       check_gl_error();

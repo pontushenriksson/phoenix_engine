@@ -101,7 +101,7 @@ impl ShaderProgram {
   }
 
   pub fn create_uniform(&mut self, uniform_name: &str) {
-    let uniform_location = unsafe {
+    let uniform_location: i32 = unsafe {
       gl::GetUniformLocation(
         self.id,
         CString::new(uniform_name).unwrap().as_ptr(),

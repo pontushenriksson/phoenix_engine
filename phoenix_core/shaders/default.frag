@@ -1,21 +1,14 @@
-#version 330 core // 460
+// #version 330 core
+#version 460 core
 
 out vec4 FragColor;
 
-in vec4 vertexColor;
+in vec3 color;
+
 in vec2 texCoord;
 
-/*
+uniform sampler2D tex0;
 
-If you declare a uniform that isn't used anywhere in your GLSL code
-the compiler will silently remove the variable from the compiled version
-which is the cause for several frustrating errors; keep this in mind! 
-
-*/
-
-uniform sampler2D Texture;
-
-void main()
-{
-  FragColor = texture(Texture, texCoord); // * vertexColor; // vec3(R, G, B, 1.0)
+void main() {
+  FragColor = texture(tex0, texCoord); // vec4(color, 1.0f);
 }

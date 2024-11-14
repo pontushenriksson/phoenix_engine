@@ -11,8 +11,10 @@ use core::ffi::c_void;
 use std::mem;
 
 use crate::events::events;
-use crate::graphics::{self, renderer, shaders};
+use crate::graphics::renderer;
+use crate::graphics::{self, renderer::*, shaders::ShaderProgram};
 use crate::assets::loader;
+use crate::ecs::components::Texture2D;
 
 pub struct PhoenixEngine {
   window: glfw::PWindow, // Window manager
@@ -52,10 +54,8 @@ impl PhoenixEngine {
     let version = unsafe { std::ffi::CStr::from_ptr(gl::GetString(gl::VERSION) as *const i8) };
     println!("OpenGL version: {}", version.to_str().unwrap());
 
-    let icon = image::open("./assets/icons/icon.png").unwrap();
+    let icon = image::open("../assets/icons/icon.png").unwrap();
     let (width, height) = icon.dimensions();
-    #[allow(unused_variables)]
-    let icon_rgba = icon.to_rgba8().as_raw().clone();
 
     let icon_pixels = rgba_u8_as_u32(icon.to_rgba8().into_raw());
 
@@ -97,17 +97,111 @@ impl PhoenixEngine {
     unsafe { gl::GetIntegerv(gl::MAX_VERTEX_ATTRIBS, &mut nr_attributes); }
     println!("Maximum number of vertex attributes (input variable for the vertex shader) supported: {} 4-component vertex attributes available", nr_attributes);
     
+    let data: [f32; 36] = [
+    // Vertices                  Colors                      Texture coordinates
+       0.5,  0.5,  0.0,          1.0, 0.0, 0.0, 1.0,         1.0, 1.0, // Top right
+       0.5, -0.5,  0.0,          0.0, 1.0, 0.0, 1.0,         1.0, 0.0, // Bottom right
+      -0.5, -0.5,  0.0,          0.0, 0.0, 1.0, 1.0,         0.0, 0.0, // Bottom left
+      -0.5,  0.5,  0.0,          1.0, 1.0, 0.0, 1.0,         0.0, 1.0, // Top left
+    ];
+
+    let indices: [u32; 6] = [
+      0, 1, 3,
+      1, 2, 3,
+    ];
+
+    let vao: VertexArrayObject = VertexArrayObject::new();
+    vao.bind();
+
+    let vbo: VertexBufferObject = VertexBufferObject::new(gl::ARRAY_BUFFER, gl::STATIC_DRAW);
+    vbo.bind();
+    
+    vbo.store_f32_data(&data);
+
+    let ebo: ElementBufferObject = ElementBufferObject::new(gl::ELEMENT_ARRAY_BUFFER, gl::STATIC_DRAW);
+    ebo.bind();
+
+    ebo.store_u32_data(&indices);
+
+    let texture = Texture2D::new("../assets/textures/goofy.jpg");
+
+    texture.bind();
+
+    // texture.into_mipmap();
+
+    let pos_v_attrib: VertexAttribute = VertexAttribute::new(
+      0,
+      3,
+      gl::FLOAT,
+      gl::FALSE,
+      9 * mem::size_of::<gl::types::GLfloat>() as gl::types::GLsizei, // aPos (vec3) + aColor (vec4) + aTexCoord (vec2)
+      0 as *const c_void,
+    );
+
+    let color_v_attrib: VertexAttribute = VertexAttribute::new(
+      1,
+      4,
+      gl::FLOAT,
+      gl::FALSE,
+      9 * mem::size_of::<gl::types::GLfloat>() as gl::types::GLsizei, // aPos (vec3) + aColor (vec4) + aTexCoord (vec2)
+      (3 * mem::size_of::<gl::types::GLfloat>()) as *const c_void,
+    );
+
+    let texture_v_attrib: VertexAttribute = VertexAttribute::new(
+      2,
+      2,
+      gl::FLOAT,
+      gl::FALSE,
+      9 * mem::size_of::<gl::types::GLfloat>() as gl::types::GLsizei, // aPos (vec3) + aColor (vec4) + aTexCoord (vec2)
+      (7 * mem::size_of::<gl::types::GLfloat>()) as *const c_void,
+    );
+
+    pos_v_attrib.enable();
+    color_v_attrib.enable();
+    texture_v_attrib.enable();
+
+    let mut shader_program: ShaderProgram = ShaderProgram::new("./shaders/default.vert", "./shaders/default.frag");
+    
+    // shader_program.create_uniform("tex0");
+
+    shader_program.bind();
+
     while !self.window.should_close() {
-      self.events.accumulate();
       self.events.handle(&mut self.window);
 
       // self.update(); // Function which changes current data for new updated data
 
       logic();
 
-      self.renderer.render();
+      // self.renderer.render();
+
+      unsafe {
+        // Wireframe mode
+        // gl::PolygonMode(gl::FRONT_AND_BACK, gl::LINE);
+  
+        // Regular mode
+        gl::PolygonMode(gl::FRONT_AND_BACK, gl::FILL);
+  
+        gl::ClearColor(0.0, 0.0, 0.0, 0.4);
+        // check_gl_error();
+  
+        gl::Clear(gl::DEPTH_BUFFER_BIT);
+        // check_gl_error();
+        
+        gl::Clear(gl::COLOR_BUFFER_BIT);
+        // check_gl_error();
+  
+        vao.bind();
+        shader_program.bind();
+  
+        gl::DrawElements(gl::TRIANGLES, 6, gl::UNSIGNED_INT, std::ptr::null()); // Last arg is an offset or index array (when not using indices)
+        check_gl_error();
+  
+        VertexArrayObject::unbind();
+      }
 
       self.window.swap_buffers();
+      self.events.accumulate();
     }
 
     // unbind stuff
@@ -152,5 +246,14 @@ pub mod bindings {
 
   pub fn register_action_for_event<F: FnMut()>(action: KeyAction, mut func: F) {
     func();
+  }
+}
+
+fn check_gl_error() {
+  unsafe {
+    let error = gl::GetError();
+    if error != gl::NO_ERROR {
+      println!("OpenGL error: {:?}", error);
+    }
   }
 }
