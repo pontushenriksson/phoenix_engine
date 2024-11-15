@@ -87,10 +87,6 @@ where
     }
   }
 
-  pub fn quick() {
-
-  }
-
   pub fn error(&mut self, error: E) {
     self.log(PhoenixResult::Error(error), "ERROR".blue());
   }
@@ -99,7 +95,7 @@ where
     self.log(PhoenixResult::Data(warning), "WARNING".magenta());
   }
 
-  pub fn info(&mut self, info: T) {
+  pub fn info<S: std::fmt::Debug>(&mut self, info: S) {
     self.log(PhoenixResult::Data(info), "INFO".green());
   }
 

@@ -116,14 +116,17 @@ where
   }
 
   pub fn run<F: FnMut()>(&mut self, mut logic: F) /* -> Result<PhoenixLogPath, Vec<ErrorMessage>> */ {  
-    self.debugger.set_mode(DebuggerRunningMode::Accumulate(DebuggerOutputMode::File));
-    
     let mut nr_attributes: i32 = 0;
     unsafe { gl::GetIntegerv(gl::MAX_VERTEX_ATTRIBS, &mut nr_attributes); }
     println!("Maximum number of vertex attributes (input variable for the vertex shader) supported: {} 4-component vertex attributes available", nr_attributes);
-    self.debugger.info(format!("Maximum number of vertex attributes (input variable for the vertex shader) supported: {} 4-component vertex attributes available", nr_attributes));
 
-    self.debugger.info("ddasda");
+    self.debugger.info(
+      format!(
+        "Maximum number of vertex attributes (input variable for the vertex shader) supported: {} 4-component vertex attributes available", 
+        nr_attributes
+      )
+    );
+    
     // texture.into_mipmap();
     
     // shader_program.create_uniform("tex0");
