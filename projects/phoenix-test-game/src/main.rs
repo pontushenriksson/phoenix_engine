@@ -10,8 +10,11 @@ mod scripts {
 
 use scripts::*;
 
+const WINDOW_WIDTH: u32 = 800;
+const WINDOW_HEIGHT: u32 = 800;
+
 fn main() {
-  let mut engine = PhoenixEngine::new(800, 800, "Test Game", "./assets/icons/icon.png", DebuggerRunningMode::Accumulate(DebuggerOutputMode::File));
+  let mut engine = PhoenixEngine::new(WINDOW_WIDTH, WINDOW_HEIGHT, "Test Game", "./assets/icons/icon.png", DebuggerRunningMode::Accumulate(DebuggerOutputMode::File));
 
   engine.add_resource(PhoenixEngine::create_texture2D("./assets/textures/goofy.jpg"));
   engine.add_resource(PhoenixEngine::create_shader("./shaders/shader.vert", "./shaders/shader.frag"));
@@ -30,6 +33,7 @@ fn main() {
   ];
 
   engine.new_static_object(data.to_vec(), indices.to_vec(), 0, 0); // later engine.new_component(PhoenixEngine::create_component());
+  engine.new_camera_3d(WINDOW_WIDTH, WINDOW_HEIGHT, PhoenixEngine::world_space_point_3d(0.0, 0.0, 0.0));
 
   engine.run(|| {
     /*

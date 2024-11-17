@@ -9,6 +9,7 @@ use std::time::{Instant, Duration};
 use std::collections::HashMap;
 use core::ffi::c_void;
 use std::mem;
+use cgmath;
 
 use crate::events::events;
 use crate::graphics::renderer;
@@ -46,8 +47,8 @@ pub struct PhoenixEngine {
   // state: u32,
   textures: Vec<Texture2D>, // Change to general 'Texture' later
   shaders: Vec<ShaderProgram>,
-  static_objects: Vec<StaticGameObject>
-
+  static_objects: Vec<StaticGameObject>,
+  cameras_3d: Vec<Camera3D>,
   // render_que: RenderQue,
 }
 
@@ -136,6 +137,7 @@ impl PhoenixEngine {
       textures: Vec::new(),
       shaders: Vec::new(),
       static_objects: Vec::new(),
+      cameras_3d: Vec::new()
     })
   }
 
@@ -227,10 +229,14 @@ impl PhoenixEngine {
 
   pub fn run<F: FnMut()>(&mut self, mut logic: F) /* -> Result<PhoenixLogPath, Vec<ErrorMessage>> */ {  
     // spawn thread with: // self.update(); // Function which changes current data for new updated data
-    
+
     while !self.window.should_close() {
       self.events.handle(&mut self.window);
       logic();
+
+      self.cameras_3d.get(0).unwrap().inputs(&mut self.window);
+      self.cameras_3d.get(0).unwrap().update_matrix(45.0, 0.1, 100.0);
+      self.cameras_3d.get(0).unwrap().matrix(&mut self.shaders.get(0).unwrap(), "camMatrix");
 
       // self.renderer.render();
 
@@ -291,6 +297,20 @@ impl PhoenixEngine {
         }
       }
     }
+
+    ShaderProgram::unbind(); // Maybe change to shader_program.unbind(); later?
+
+    /* Move this later into member specific functions
+
+    unsafe {
+        gl::DeleteVertexArrays(1, &vao.id);
+        gl::DeleteBuffers(1, &vbo.id);
+        gl::DeleteBuffers(1, &ibo.id);
+        gl::DeleteProgram(shader_program.program_id);
+        gl::DeleteTextures(1, texture.id as *const GLuint);
+    }
+
+    */
   }
 }
 
@@ -333,6 +353,20 @@ impl PhoenixEngine {
         indices, 
         texture,
         shader_program
+      )
+    );
+  }
+
+  pub fn world_space_point_3d(x: f32, y: f32, z: f32) -> cgmath::Point3<f32> {
+    cgmath::point3(x, y, z)
+  }
+
+  pub fn new_camera_3d(&mut self, width: u32, height: u32, position: cgmath::Point3<f32>) {
+    self.cameras_3d.push(
+      Camera3D::new(
+        width as i32,
+        height as i32,
+        position,
       )
     );
   }
