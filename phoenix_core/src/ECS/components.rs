@@ -1,8 +1,9 @@
 use gl;
 use image::GenericImageView;
 
+#[derive(Debug)]
 pub struct Texture2D {
-  id: gl::types::GLuint,
+  pub id: gl::types::GLuint,
 }
 
 /// https://learnopengl.com/Getting-started/Textures

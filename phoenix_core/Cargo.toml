@@ -14,3 +14,15 @@ rayon = "1.10.0"
 cgmath = "0.18.0"
 serde = "1.0.214"
 chrono = "0.4.38"
+sysinfo = "0.32.0"
+
+[dependencies.nvml]
+version = "0.0.2"
+optional = true
+
+[dependencies.amdgpu]
+version = "1.0.12"
+optional = true
+
+[features]
+gpu_monitoring = ["nvml", "amdgpu"]

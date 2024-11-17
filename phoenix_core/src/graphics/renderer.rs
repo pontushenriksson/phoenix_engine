@@ -5,9 +5,11 @@ use std::ffi::c_void;
 
 use crate::graphics::shaders;
 use crate::ecs::components::Texture2D;
+use crate::debugger::debugger::*;
 
 use super::shaders::ShaderProgram;
 
+#[derive(Debug)]
 pub struct VertexArrayObject {
   id: gl::types::GLuint,
 }
@@ -35,6 +37,7 @@ impl VertexArrayObject {
   }
 }
 
+#[derive(Debug)]
 pub struct VertexBufferObject {
   id: gl::types::GLuint,     // id
   r#type: gl::types::GLenum, // target type
@@ -82,6 +85,7 @@ impl VertexBufferObject {
   }
 }
 
+#[derive(Debug)]
 pub struct ElementBufferObject {
   size: isize,
   id: gl::types::GLuint,
@@ -124,6 +128,7 @@ impl ElementBufferObject {
     }
 }
 
+#[derive(Debug)]
 pub struct VertexAttribute {
   location: gl::types::GLuint, // location in layout in shader
 }
@@ -164,12 +169,14 @@ impl VertexAttribute {
   }
 }
 
+#[derive(Debug)]
 pub struct PhoenixRenderer {
   
 }
 
 /// Temporary game object for testing
 
+#[derive(Debug)]
 pub struct StaticGameObject {
   vertices: Vec<f32>,
   indices: Vec<u32>,
@@ -266,8 +273,6 @@ impl StaticGameObject {
 
 impl PhoenixRenderer {
   pub fn new() -> PhoenixRenderer {
-    
-    
     PhoenixRenderer {
 
     }

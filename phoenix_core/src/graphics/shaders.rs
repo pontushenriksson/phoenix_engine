@@ -1,6 +1,7 @@
 use std::{collections::HashMap, ffi::CString, fs::File, io::Read, ptr};
 use cgmath::Matrix;
 
+#[derive(Debug)]
 pub struct ShaderProgram {
   id: gl::types::GLuint,
   idx: u32, // Change later, the index in the Vec<ShaderProgram>

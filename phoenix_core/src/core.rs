@@ -17,12 +17,30 @@ use crate::graphics::{self, renderer::*, shaders::ShaderProgram};
 use crate::assets::loader;
 use crate::ecs::components::Texture2D;
 
-pub struct PhoenixEngine<T, E> {
-  debugger: PhoenixDebugger<T, E>,
+// Move later
+use chrono::Local;
+use colored::*;
+
+use sysinfo::System;
+#[cfg(feature = "gpu_monitoring")]
+use nvml_wrapper::Nvml;
+#[cfg(feature = "gpu_monitoring")]
+use amdgpu::{DeviceHandle, DrmCard};
+
+#[derive(Debug)]
+pub struct PhoenixEngine {
+  system: System,
+  #[cfg(feature = "gpu_monitoring")]
+  nvml: Option<Nvml>,
+  #[cfg(feature = "gpu_monitoring")]
+  amdgpu_device: Option<DeviceHandle>,
+
+  debugger: EngineDebugger,
   window: glfw::PWindow, // Window manager
   renderer: graphics::renderer::PhoenixRenderer,
   events: events::EventHandler,
   last_frame: std::time::Instant,
+  operating_time: Instant,
   delta_time: f32,
   // event_handler: events::Handler,
   // state: u32,
@@ -33,12 +51,19 @@ pub struct PhoenixEngine<T, E> {
   // render_que: RenderQue,
 }
 
-impl<T, E> PhoenixEngine<T, E>
-where
-    T: std::fmt::Debug,
-    E: std::fmt::Debug,
-{
-  pub fn new(window_width: u32, window_height: u32, title: &str /* "Phoenix Engine v0.1.0" */, icon_path: &str) -> Box<PhoenixEngine<T, E>> {
+impl PhoenixEngine {
+  pub fn new(window_width: u32, window_height: u32, title: &str /* "Phoenix Engine v0.1.0" */, icon_path: &str, dbg_mode: DebuggerRunningMode) -> Box<PhoenixEngine> {
+    let mut system = System::new_all();
+    system.refresh_all();
+
+    #[cfg(feature = "gpu_monitoring")]
+    let nvml = Nvml::init().ok();
+
+    #[cfg(feature = "gpu_monitoring")]
+    let amdgpu_device = DrmCard::primary().ok().and_then(|card| {
+        DeviceHandle::open(card).ok()
+    });
+    
     let mut glfw: Glfw = glfw::init(glfw::fail_on_errors).unwrap();
 
     glfw.window_hint(glfw::WindowHint::Resizable(true));
@@ -91,21 +116,106 @@ where
     let renderer: renderer::PhoenixRenderer = renderer::PhoenixRenderer::new();
     let events: events::EventHandler = events::EventHandler::new(glfw, receiver);
 
+    let mut nr_attributes: i32 = 0;
+    unsafe { gl::GetIntegerv(gl::MAX_VERTEX_ATTRIBS, &mut nr_attributes); }
+    println!("Maximum number of vertex attributes (input variable for the vertex shader) supported: {} 4-component vertex attributes available", nr_attributes);
+    
     Box::new(PhoenixEngine {
-      debugger: PhoenixDebugger::new(
-        DebuggerRunningMode::Accumulate(
-          DebuggerOutputMode::Terminal
-        )
-      ),
+      system,
+      #[cfg(feature = "gpu_monitoring")]
+      nvml,
+      #[cfg(feature = "gpu_monitoring")]
+      amdgpu_device,
+      debugger: EngineDebugger::new(dbg_mode), 
       window: window,
       renderer: renderer,
       events: events,
       last_frame: Instant::now(),
+      operating_time: Instant::now(),
       delta_time: 0.0,
-      textures: vec![],
-      shaders: vec![],
-      static_objects: vec![],
+      textures: Vec::new(),
+      shaders: Vec::new(),
+      static_objects: Vec::new(),
     })
+  }
+
+  /// Check both system RAM and GPU memory.
+  pub fn check_mem(&mut self) {
+    self.check_ram();
+    self.check_gpu();
+  }
+
+  /// Check system RAM usage.
+  pub fn check_ram(&mut self) {
+    self.system.refresh_memory();
+
+    let total_memory = self.system.total_memory();
+    let used_memory = self.system.used_memory();
+
+    // Printing in KB
+    println!("RAM Usage: {:.2} KB / {:.2} KB", used_memory as f64 / 1024.0, total_memory as f64 / 1024.0);
+
+    // Printing in MB
+    println!("RAM Usage: {:.2} MB / {:.2} MB", used_memory as f64 / 1048576.0, total_memory as f64 / 1048576.0);
+
+    // Printing in GB
+    println!("RAM Usage: {:.2} GB / {:.2} GB", used_memory as f64 / 1073741824.0, total_memory as f64 / 1073741824.0);
+
+    if used_memory > total_memory * 8 / 10 {
+      println!("Warning: High RAM usage!");
+    }
+  }
+
+  /// Check GPU memory usage (NVIDIA and AMD).
+  pub fn check_gpu(&self) {
+    #[cfg(feature = "gpu_monitoring")]
+    {
+        if let Some(nvml) = &self.nvml {
+            match nvml.device_by_index(0).and_then(|device| device.memory_info()) {
+                Ok(memory_info) => {
+                    let total_gpu_memory = memory_info.total / 1024 / 1024;
+                    let used_gpu_memory = memory_info.used / 1024 / 1024;
+
+                    println!(
+                        "NVIDIA GPU Memory Usage: {} MB / {} MB",
+                        used_gpu_memory, total_gpu_memory
+                    );
+
+                    if used_gpu_memory > total_gpu_memory * 8 / 10 {
+                        println!("Warning: High NVIDIA GPU memory usage!");
+                    }
+                }
+                Err(err) => eprintln!("Failed to query NVIDIA GPU memory: {:?}", err),
+            }
+        }
+
+        if let Some(amdgpu_device) = &self.amdgpu_device {
+            if let Ok(vram_usage) = amdgpu_device.memory_info() {
+                let total_vram = vram_usage.vram_total / 1024 / 1024;
+                let used_vram = vram_usage.vram_used / 1024 / 1024;
+
+                println!(
+                    "AMD GPU Memory Usage: {} MB / {} MB",
+                    used_vram, total_vram
+                );
+
+                if used_vram > total_vram * 8 / 10 {
+                    println!("Warning: High AMD GPU memory usage!");
+                }
+            } else {
+                println!("Failed to query AMD GPU memory usage.");
+            }
+        }
+
+        if self.nvml.is_none() && self.amdgpu_device.is_none() {
+            println!("No supported GPU monitoring available.");
+        }
+    }
+
+    #[cfg(not(feature = "gpu_monitoring"))]
+    {
+        println!("GPU monitoring is disabled or unsupported.");
+    }
   }
 
   pub fn update(&mut self) {
@@ -116,28 +226,10 @@ where
   }
 
   pub fn run<F: FnMut()>(&mut self, mut logic: F) /* -> Result<PhoenixLogPath, Vec<ErrorMessage>> */ {  
-    let mut nr_attributes: i32 = 0;
-    unsafe { gl::GetIntegerv(gl::MAX_VERTEX_ATTRIBS, &mut nr_attributes); }
-    println!("Maximum number of vertex attributes (input variable for the vertex shader) supported: {} 4-component vertex attributes available", nr_attributes);
-
-    self.debugger.info(
-      format!(
-        "Maximum number of vertex attributes (input variable for the vertex shader) supported: {} 4-component vertex attributes available", 
-        nr_attributes
-      )
-    );
+    // spawn thread with: // self.update(); // Function which changes current data for new updated data
     
-    // texture.into_mipmap();
-    
-    // shader_program.create_uniform("tex0");
-    
-    // self.shaders.get(0).unwrap().bind(); // Change later to be a selected shader
-
     while !self.window.should_close() {
       self.events.handle(&mut self.window);
-
-      // self.update(); // Function which changes current data for new updated data
-
       logic();
 
       // self.renderer.render();
@@ -176,6 +268,29 @@ where
     
     */
     // .join().unwrap();
+
+    self.check_ram();
+    self.check_gpu();
+
+    if let Some(flushed_logs) = self.debugger.flush() {
+      // println!("Flushed logs: {:?}", flushed_logs);
+      for entry in flushed_logs {
+        match &entry.level {
+          LogLevel::Info => {
+            println!("{} {} {}", "[INFO]".on_green(), "date".green(), entry.message.green().bold());
+          }
+          LogLevel::Warning => {
+            println!("{} {} {}", "[WARNING]".on_magenta(), "date".magenta(), entry.message.magenta().bold());
+          }
+          LogLevel::Error => {
+            println!("{} {} {}", "[ERROR]".on_red(), "date".red(), entry.message.red().bold());
+          }
+          LogLevel::Trace => {
+            println!("{} {} {}", "[TRACE]".on_blue(), "date".blue(), entry.message.blue().bold());
+          }
+        }
+      }
+    }
   }
 }
 
@@ -194,19 +309,15 @@ pub enum Resource {
   // Component(Component)
 }
 
-impl<T, E> PhoenixEngine<T, E>
-where
-    T: std::fmt::Debug,
-    E: std::fmt::Debug,
-{
+impl PhoenixEngine {
   pub fn create_texture2D(path: &str) -> Resource {
     Resource::Texture(Texture2D::new(path))
   }
-  
+
   pub fn create_shader(vert_path: &str, frag_path: &str) -> Resource {
     Resource::Shader(ShaderProgram::new(vert_path, frag_path))
   }
-  
+
   pub fn add_resource(&mut self, resource: Resource) {
     match resource {
       Resource::Shader(program) => self.shaders.push(program),

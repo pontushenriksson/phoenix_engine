@@ -2,6 +2,7 @@ use phoenix_core::core::*;
 use phoenix_core::core::bindings::*;
 use phoenix_core::ecs::components::*;
 use phoenix_core::graphics::shaders::*;
+use phoenix_core::debugger::debugger::*;
 
 mod scripts {
     pub mod object;
@@ -10,7 +11,7 @@ mod scripts {
 use scripts::*;
 
 fn main() {
-  let mut engine = PhoenixEngine::new(800, 800, "Test Game", "./assets/icons/icon.png");
+  let mut engine = PhoenixEngine::new(800, 800, "Test Game", "./assets/icons/icon.png", DebuggerRunningMode::Accumulate(DebuggerOutputMode::File));
 
   engine.add_resource(PhoenixEngine::create_texture2D("./assets/textures/goofy.jpg"));
   engine.add_resource(PhoenixEngine::create_shader("./shaders/shader.vert", "./shaders/shader.frag"));
@@ -29,7 +30,6 @@ fn main() {
   ];
 
   engine.new_static_object(data.to_vec(), indices.to_vec(), 0, 0); // later engine.new_component(PhoenixEngine::create_component());
-  
 
   engine.run(|| {
     /*

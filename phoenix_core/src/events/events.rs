@@ -4,10 +4,11 @@ use rayon::prelude::*;
 use std::sync::{mpsc, Arc, Mutex};
 use std::collections::HashMap;
 
+#[derive(Debug)]
 pub struct EventHandler {
   pub glfw: Glfw,
   pub receiver: GlfwReceiver<(f64, WindowEvent)>,
-  pub actions: HashMap<WindowEvent, Vec<Box<dyn FnMut()>>>,
+  // pub actions: HashMap<WindowEvent, Vec<Box<dyn FnMut()>>>,
 }
 
 impl EventHandler {
@@ -15,7 +16,7 @@ impl EventHandler {
     EventHandler {
       glfw: glfw,
       receiver: receiver,
-      actions: HashMap::new(),
+      // actions: HashMap::new(),
     }
   }
 
