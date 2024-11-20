@@ -164,7 +164,7 @@ impl PhoenixEngine {
     println!("RAM Usage: {:.2} GB / {:.2} GB", used_memory as f64 / 1073741824.0, total_memory as f64 / 1073741824.0);
 
     if used_memory > total_memory * 8 / 10 {
-      println!("Warning: High RAM usage!");
+      self.debugger.log(LogLevel::Warning, "High ram usage!".to_string());
     }
   }
 
@@ -234,9 +234,9 @@ impl PhoenixEngine {
       self.events.handle(&mut self.window);
       logic();
 
-      self.cameras_3d.get(0).unwrap().inputs(&mut self.window);
-      self.cameras_3d.get(0).unwrap().update_matrix(45.0, 0.1, 100.0);
-      self.cameras_3d.get(0).unwrap().matrix(&mut self.shaders.get(0).unwrap(), "camMatrix");
+      self.cameras_3d.get_mut(0).unwrap().inputs(&mut self.window);
+      self.cameras_3d.get_mut(0).unwrap().update_matrix(45.0, 0.1, 100.0);
+      self.cameras_3d.get_mut(0).unwrap().matrix(&mut self.shaders.get_mut(0).unwrap(), "camMatrix");
 
       // self.renderer.render();
 
@@ -280,19 +280,27 @@ impl PhoenixEngine {
 
     if let Some(flushed_logs) = self.debugger.flush() {
       // println!("Flushed logs: {:?}", flushed_logs);
-      for entry in flushed_logs {
-        match &entry.level {
-          LogLevel::Info => {
-            println!("{} {} {}", "[INFO]".on_green(), "date".green(), entry.message.green().bold());
-          }
-          LogLevel::Warning => {
-            println!("{} {} {}", "[WARNING]".on_magenta(), "date".magenta(), entry.message.magenta().bold());
-          }
-          LogLevel::Error => {
-            println!("{} {} {}", "[ERROR]".on_red(), "date".red(), entry.message.red().bold());
-          }
-          LogLevel::Trace => {
-            println!("{} {} {}", "[TRACE]".on_blue(), "date".blue(), entry.message.blue().bold());
+      
+      if self.debugger.mode == DebuggerRunningMode::Instant(DebuggerOutputMode::File)
+      || self.debugger.mode == DebuggerRunningMode::Accumulate(DebuggerOutputMode::File) {
+        for entry in flushed_logs {
+          match &entry.level {
+            LogLevel::Info => {
+              println!("{} {} {}", "[INFO]".on_green(), "timestamp".green(), entry.message.green().bold());
+              self.debugger.write_to_file(format!("{} {} {}", "[INFO]", "date", entry.message))
+            }
+            LogLevel::Warning => {
+              println!("{} {} {}", "[WARNING]".on_magenta(), "timestamp".magenta(), entry.message.magenta().bold());
+              self.debugger.write_to_file(format!("{} {} {}", "[WARNING]", "date", entry.message));
+            }
+            LogLevel::Error => {
+              println!("{} {} {}", "[ERROR]".on_red(), "timestamp".red(), entry.message.red().bold());
+              self.debugger.write_to_file(format!("{} {} {}", "[ERROR]", "date", entry.message));
+            }
+            LogLevel::Trace => {
+              println!("{} {} {}", "[TRACE]".on_blue(), "timestamp".blue(), entry.message.blue().bold());
+              self.debugger.write_to_file(format!("{} {} {}", "[TRACE]", "date", entry.message));
+            }
           }
         }
       }
@@ -393,11 +401,11 @@ pub mod bindings {
   }
 }
 
-fn check_gl_error() {
+fn check_gl_error(place: &str) {
   unsafe {
     let error = gl::GetError();
     if error != gl::NO_ERROR {
-      println!("OpenGL error: {:?}", error);
+      println!("OpenGL error at {} : {:?}", place, error);
     }
   }
 }

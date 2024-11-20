@@ -33,7 +33,7 @@ pub enum LogLevel {
 
 #[derive(Debug)]
 pub struct EngineDebugger {
-  mode: DebuggerRunningMode,
+  pub mode: DebuggerRunningMode,
   stack: Option<Arc<Mutex<Vec<LogMessage>>>>,
   sender: Option<mpsc::Sender<LogMessage>>,
   log_file_path: Option<String>,
@@ -108,6 +108,17 @@ impl EngineDebugger {
     let now = Local::now();
     let filename = format!("{}/log_{}.txt", DIR, now.format("%Y-%m-%d_%H-%M-%S"));
     filename
+  }
+
+  pub fn write_to_file(&self, message: String) {
+    if let Some(ref path) = self.log_file_path {
+      let mut file = OpenOptions::new()
+        .create(true)
+        .append(true)
+        .open(path)
+        .expect("Failed to open log file");
+      writeln!(file, "{}", message).expect("Failed to write to log file");
+    }
   }
 
   pub fn log(&self, level: LogLevel, message: String) {
