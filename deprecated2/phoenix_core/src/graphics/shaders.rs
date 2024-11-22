@@ -171,7 +171,7 @@ impl ShaderProgram {
         1,
         gl::FALSE,
         matrix.as_ptr(),
-      )           
+      )
     }
   }
 }

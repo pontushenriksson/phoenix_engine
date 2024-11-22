@@ -376,6 +376,13 @@ dependencies = [
 ]
 
 [[package]]
+name = "test_game"
+version = "0.1.0"
+dependencies = [
+ "phoenix_core",
+]
+
+[[package]]
 name = "unicode-ident"
 version = "1.0.14"
 source = "registry+https://github.com/rust-lang/crates.io-index"

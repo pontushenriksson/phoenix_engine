@@ -181,20 +181,24 @@ pub struct PhoenixRenderer {
 pub struct StaticGameObject {
   vertices: Vec<f32>,
   indices: Vec<u32>,
-  texture: usize,
+  texture: i128,
   vao: VertexArrayObject,
   vbo: VertexBufferObject,
   ebo: ElementBufferObject,
   vap: Vec<VertexAttribute>,
   shader_program: usize,
+  position: cgmath::Vector3<f32>,
+  pub model_matrix: cgmath::Matrix4<f32>,
 }
 
 impl StaticGameObject {
   pub fn new(
     vertices: Vec<f32>,
     indices: Vec<u32>,
-    texture: usize,
+    texture: i128,
     shader_program: usize,
+    position: cgmath::Vector3<f32>,
+    model_matrix: cgmath::Matrix4<f32>,
   ) -> StaticGameObject {
     let vao: VertexArrayObject = VertexArrayObject::new();
     vao.bind();
@@ -216,8 +220,8 @@ impl StaticGameObject {
       3,
       gl::FLOAT,
       gl::FALSE,
-      9 * mem::size_of::<gl::types::GLfloat>() as gl::types::GLsizei, // aPos (vec3) + aColor (vec4) + aTexCoord (vec2)
-      0 as *const c_void,
+      12 * mem::size_of::<gl::types::GLfloat>() as gl::types::GLsizei, // aPos (vec3) + aColor (vec4) + aTexCoord (vec2) + aNormal (vec3) = 12
+      0 as *const c_void,                                             // aPos is first so no offset (0)
     );
 
     let color_v_attrib: VertexAttribute = VertexAttribute::new(
@@ -225,8 +229,8 @@ impl StaticGameObject {
       4,
       gl::FLOAT,
       gl::FALSE,
-      9 * mem::size_of::<gl::types::GLfloat>() as gl::types::GLsizei, // aPos (vec3) + aColor (vec4) + aTexCoord (vec2)
-      (3 * mem::size_of::<gl::types::GLfloat>()) as *const c_void,
+      12 * mem::size_of::<gl::types::GLfloat>() as gl::types::GLsizei, // aPos (vec3) + aColor (vec4) + aTexCoord (vec2) + aNormal (vec3)
+      (3 * mem::size_of::<gl::types::GLfloat>()) as *const c_void,    // aColor is second so it has an offset equal to the length of all previous attibutes (vec3 = 3)
     );
 
     let texture_v_attrib: VertexAttribute = VertexAttribute::new(
@@ -234,8 +238,17 @@ impl StaticGameObject {
       2,
       gl::FLOAT,
       gl::FALSE,
-      9 * mem::size_of::<gl::types::GLfloat>() as gl::types::GLsizei, // aPos (vec3) + aColor (vec4) + aTexCoord (vec2)
-      (7 * mem::size_of::<gl::types::GLfloat>()) as *const c_void,
+      12 * mem::size_of::<gl::types::GLfloat>() as gl::types::GLsizei, // aPos (vec3) + aColor (vec4) + aTexCoord (vec2) + aNormal (vec3)
+      (7 * mem::size_of::<gl::types::GLfloat>()) as *const c_void,    // aTexCoord is third so it has an offset equal to the length of all previous attibutes (vec3 + vec4 = 7)
+    );
+
+    let normals_v_attrib: VertexAttribute = VertexAttribute::new(
+      3,
+      3,
+      gl::FLOAT,
+      gl::FALSE,
+      12 * mem::size_of::<gl::types::GLfloat>() as gl::types::GLsizei, // aPos (vec3) + aColor (vec4) + aTexCoord (vec2) + aNormal (vec3)
+      (9 * mem::size_of::<gl::types::GLfloat>()) as *const c_void,    // aTexCoord is last so it has an offset equal to the length of all previous attibutes (vec3 + vec4 + vec2 = 9)
     );
 
     pos_v_attrib.enable();
@@ -251,27 +264,40 @@ impl StaticGameObject {
       vap: vec![pos_v_attrib, color_v_attrib, texture_v_attrib],
       shader_program: shader_program,
       texture: texture,
+      position: position,
+      model_matrix: model_matrix * cgmath::Matrix4::from_translation(position), // Equivalent to glm::translate(model_matrix, position)
     }
   }
 
-  pub fn render(&self, textures: &Vec<Texture2D>, shaders: &Vec<ShaderProgram>) {
-    // bind texture
-    textures.get(self.texture).unwrap().bind();
+  pub fn render(&self, cameras: &mut Vec<Camera3D>, textures: &Vec<Texture2D>, shaders: &mut Vec<ShaderProgram>, window: &mut glfw::PWindow) {
+    // bind texture if needed (To not select a texture, use a negative index such as -1)
+    if self.texture > 0 {
+      textures.get(self.texture as usize).unwrap().bind();
+    }
 
     // bind vao (vbo & ebo get included there)
     self.vao.bind();
 
     // bind its shader
     shaders.get(self.shader_program).unwrap().bind();
+
+    cameras.get_mut(0).unwrap().inputs(window);
+    cameras.get_mut(0).unwrap().update_matrix(45.0, 0.1, 100.0);
+    cameras.get_mut(0).unwrap().matrix(&mut shaders.get_mut(0).unwrap(), "camMatrix");
+
     
     // call/forward draw calls
     unsafe {
       gl::DrawElements(gl::TRIANGLES, self.ebo.size as i32, gl::UNSIGNED_INT, std::ptr::null()); // Last arg is an offset or index array (when not using indices)
-      check_gl_error();
+      check_gl_error("gl::DrawElements(gl::TRIANGLES, self.ebo.size as i32, gl::UNSIGNED_INT, std::ptr::null())");
     }
   }
 
   // Maybe a bind and unbind function later?
+}
+
+pub struct Light {
+  
 }
 
 #[derive(Debug)]
@@ -303,10 +329,8 @@ impl Camera3D {
   } // new::perspective()
 
   pub fn update_matrix(&mut self, fov: f32, near_plane: f32, far_plane: f32) {
-    let mut view: cgmath::Matrix4<f32> = cgmath::Matrix4::identity();
-    let mut proj: cgmath::Matrix4<f32> = cgmath::Matrix4::identity();
-    view = cgmath::Matrix4::look_at_rh(self.position, self.position + self.orientation, self.up);
-    proj = cgmath::perspective(cgmath::Deg(fov), (self.window_width / self.window_height) as f32, near_plane, far_plane);
+    let view = cgmath::Matrix4::look_at_rh(self.position, self.position + self.orientation, self.up);
+    let proj = cgmath::perspective(cgmath::Deg(fov), (self.window_width / self.window_height) as f32, near_plane, far_plane);
 
     self.matrix = proj * view;
   }
@@ -402,11 +426,11 @@ impl PhoenixRenderer {
   }
 }
 
-fn check_gl_error() {
+fn check_gl_error(place: &str) {
   unsafe {
     let error = gl::GetError();
     if error != gl::NO_ERROR {
-      println!("OpenGL error: {:?}", error);
+      println!("OpenGL error at {} : {:?}", place, error);
     }
   }
 }

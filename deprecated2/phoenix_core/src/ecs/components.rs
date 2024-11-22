@@ -2,13 +2,20 @@ use gl;
 use image::GenericImageView;
 
 #[derive(Debug)]
-pub struct Texture2D {
-  pub id: gl::types::GLuint,
+pub enum TextureType {
+  Diffuse,
+  Specular,
 }
 
-/// https://learnopengl.com/Getting-started/Textures
+#[derive(Debug)]
+pub struct Texture2D {
+  pub id: gl::types::GLuint,
+  pub r#type: TextureType,
+}
+
+
 impl Texture2D {
-  pub fn new(file_path: &str) -> Texture2D {
+  pub fn new(file_path: &str, texture_type: TextureType) -> Texture2D {
       let img = image::open(file_path).expect("Failed to load texture");
       let (width, height) = img.dimensions();
       let img_data = img.to_rgba8(); // Convert to RGBA format
@@ -52,11 +59,12 @@ impl Texture2D {
           );
       }
 
-      Texture2D { id: texture_id }
+      Texture2D { id: texture_id, r#type: texture_type }
   }
 
-  pub fn bind(&self) {
+  pub fn bind(&self/*, texture_unit: u32 */) {
     unsafe {
+      // gl::ActivateTexture(gl::TEXTURE0 + texture_unit);
       gl::BindTexture(gl::TEXTURE_2D, self.id);
     }
   }
