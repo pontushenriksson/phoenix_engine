@@ -1,0 +1,28 @@
+[package]
+name = "phoenix_core"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+gl = "0.14.0"
+glfw = "0.58.0"
+
+colored = "2.1.0"
+image = "0.25.4"
+log = "0.4.22"
+rayon = "1.10.0"
+cgmath = "0.18.0"
+serde = "1.0.214"
+chrono = "0.4.38"
+sysinfo = "0.32.0"
+
+[dependencies.nvml]
+version = "0.0.2"
+optional = true
+
+[dependencies.amdgpu]
+version = "1.0.12"
+optional = true
+
+[features]
+gpu_monitoring = ["nvml", "amdgpu"]
