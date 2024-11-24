@@ -1,4 +1,4 @@
-<img src="./assets/icons/logo.svg" height="70px" alt="An image of the Phoenix logo." />
+<img src="./assets/icons/logo.svg" height="70px" alt="An image of the Phoenix Engine logo." />
 
 # Phoenix Engine
 
