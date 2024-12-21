@@ -96,35 +96,35 @@ pub struct ElementBufferObject {
 
 impl ElementBufferObject {
     pub fn new(r#type: gl::types::GLenum, usage: gl::types::GLenum) -> ElementBufferObject {
-        let mut id = 0;
-        unsafe {
-            gl::GenBuffers(1, &mut id);
-        }
+      let mut id = 0;
+      unsafe {
+        gl::GenBuffers(1, &mut id);
+      }
 
-        ElementBufferObject { size: 0, id, r#type, usage }
+      ElementBufferObject { size: 0, id, r#type, usage }
     }
 
     pub fn bind(&self) {
-        unsafe {
-            gl::BindBuffer(self.r#type, self.id);
-        }
+      unsafe {
+        gl::BindBuffer(self.r#type, self.id);
+      }
     }
 
     pub fn unbind(&self) {
-        unsafe {
-            gl::BindBuffer(self.r#type, 0);
-        }
+      unsafe {
+        gl::BindBuffer(self.r#type, 0);
+      }
     }
 
     pub fn store_u32_data(&mut self, data: &[u32]) {
       self.size = (data.len() * mem::size_of::<gl::types::GLfloat>()) as gl::types::GLsizeiptr;
       unsafe {
-          gl::BufferData(
-              self.r#type,
-              self.size,
-              &data[0] as *const u32 as *const c_void,
-              self.usage,
-          )
+        gl::BufferData(
+          self.r#type,
+          self.size,
+          &data[0] as *const u32 as *const c_void,
+          self.usage,
+        )
       }
     }
 }

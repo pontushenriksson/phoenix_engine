@@ -4,3 +4,9 @@ version = "0.1.0"
 edition = "2021"
 
 [dependencies]
+egui = "0.29.1"
+egui_glfw = "0.55.2"
+egui_glow = "0.29.1"
+gl = "0.14.0"
+glfw = "0.59.0"
+phoenix_core = { path = "../phoenix_core" }

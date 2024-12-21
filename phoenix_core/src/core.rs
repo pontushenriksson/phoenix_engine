@@ -1,123 +1,245 @@
-use gl;
-use glfw::{Context, Glfw, GlfwReceiver, PWindow, WindowEvent};
-use image::GenericImageView;
+use std::io::{self, Write};
 use std::sync::{Arc, Mutex};
-use std::collections::HashMap;
+use std::time::{Duration, Instant};
+use gl;
+use glfw::{Context, Glfw, PWindow};
+use image::{self, GenericImageView};
+use cgmath::*;
 
-use crate::events::events::EventsManager;
+use crate::assets::loader::RawVertexData;
+use crate::debugger::logger::*;
+use crate::info;
+use crate::debugger::debugger::Debugger;
+use crate::debugger::debugger::PhoenixError;
 
-pub trait Layer {
-  fn on_attach(&mut self) {}
-  fn on_update(&mut self) {}
+use crate::gl_call;
+use crate::assets::loader::AssetLoader;
+use crate::graphics::camera::PerspectiveCamera;
+use crate::graphics::data::*;
+use crate::graphics::mesh::*;
+use crate::graphics::renderer::Renderer;
+use crate::graphics::shader::*;
+use crate::graphics::texture::*;
+use crate::layers::layer;
+use crate::scenes::scene::{Scene, StaticGameObject, Transform};
+use crate::window::window::*;
+use crate::layers::layer::*;
+
+/// Move to mesh.rs later
+#[derive(Debug)]
+pub struct Mesh {
+  pub vao: VertexArrayObject,
+  pub vbos: Vec<VertexBufferObject>,
+  pub ebo: Option<ElementBufferObject>,
+  pub attributes: Vec<Vec<VertexAttributeDescriptor>> // Attributes for each VBO
 }
 
-pub struct PhoenixEngine {
-  glfw: Arc<Mutex<Glfw>>,
-  window: Arc<Mutex<PWindow>>,
-  events_manager: EventsManager,
-  layers: Vec<Box<dyn Layer>>,
+/// Loading glTF Models
+/// For each buffer in a glTF file:
+
+/// Create a VertexBufferObject and upload data.
+/// Create VertexAttributeDescriptors for the layout.
+/// Use link_vbo or link_separate_vbo based on interleaving.
+
+pub struct PhoenixCore{
+  window_manager: WindowManager,
+  layers: LayerStack,
+  logger: Logger,
 }
 
-impl PhoenixEngine {
+impl PhoenixCore {
   pub fn new(
     window_width: u32,
     window_height: u32,
     title: &str,
     icon_path: &str
-  ) -> Box<PhoenixEngine> {
-    let glfw = Arc::new(Mutex::new(glfw::init(glfw::fail_on_errors).unwrap()));
+  ) -> Result<Box<PhoenixCore>, PhoenixError> {
+    println!("--------------------------------- PhoenixEngine ---------------------------------");
+    println!("Creating WindowManager ...");
+    let window_manager= WindowManager::new(window_width, window_height, title, icon_path);
 
-    glfw.lock().unwrap().window_hint(glfw::WindowHint::Resizable(true));
-    glfw.lock().unwrap().window_hint(glfw::WindowHint::TransparentFramebuffer(true));
+    println!("Setting viewport ...");
 
-    let (mut window, receiver) = glfw
-      .lock().unwrap()
-      .create_window(window_width, window_height, title, glfw::WindowMode::Windowed)
-      .expect("Failed to create GLFW window!");
-    
-    window.make_current();
-    window.set_key_polling(true);
-    window.set_framebuffer_size_polling(true);
+    unsafe { gl::Viewport(0, 0, window_width as i32, window_height as i32); }
 
-    let icon = match image::open(icon_path) {
-      Ok(icon) => icon,
-      Err(e) => { panic!("Failed to open path to icon: {} \n\terr| {}", icon_path, e) }
-    };
+    println!("Getting version and shader verion ...");
 
-    let (width, height) = icon.dimensions();
+    let version = unsafe { std::ffi::CStr::from_ptr(gl_call!(gl::GetString(gl::VERSION) as *const i8)) };
 
-    let icon_pixels = rgba_u8_as_u32(icon.to_rgba8().into_raw());
+    let shader_version = unsafe { std::ffi::CStr::from_ptr(gl::GetString(gl::SHADING_LANGUAGE_VERSION) as *const i8) };
 
-    let glfw_icon = glfw::PixelImage {
-      width: width as u32,
-      height: height as u32,
-      pixels: icon_pixels,
-    };
+    println!("Info:");
 
-    window.set_icon_from_pixels(vec![glfw_icon]);
-
-    gl::load_with(|s| window.get_proc_address(s) as *const _);
-
-    let window = Arc::new(Mutex::new(window));
-    let events_manager = EventsManager::new(glfw.clone(), window.clone(), receiver);
-    
-    unsafe { gl::Viewport(0, 0, window_height as i32, window_height as i32); }
-
-    let version = unsafe { std::ffi::CStr::from_ptr(gl::GetString(gl::VERSION) as *const i8) };
-    println!("OpenGL version: {}", version.to_str().unwrap());
+    println!("\tOpenGL version: {}", version.to_str().unwrap());
+    println!("\tOpenGL shader version: {}", shader_version.to_str().unwrap());
 
     unsafe {
-      gl::Enable(gl::BLEND);
-      gl::Enable(gl::DEPTH_TEST);
-      gl::BlendFunc(gl::SRC_ALPHA, gl::ONE_MINUS_SRC_ALPHA);
+      gl_call!(gl::Enable(gl::BLEND));
+      gl_call!(gl::BlendFunc(gl::SRC_ALPHA, gl::ONE_MINUS_SRC_ALPHA));
+      gl_call!(gl::Enable(gl::DEPTH_TEST));
+      gl_call!(gl::DepthFunc(gl::LESS));
+      gl_call!(gl::Viewport(0, 0, window_width as i32, window_height as i32));
     }
 
+    println!("Info:");
+
     let mut nr_attributes: i32 = 0;
-    unsafe { gl::GetIntegerv(gl::MAX_VERTEX_ATTRIBS, &mut nr_attributes); }
-    println!("Maximum number of vertex attributes (input variable for the vertex shader) supported: {} 4-component vertex attributes available", nr_attributes);
-    
-    Box::new(PhoenixEngine {
-      glfw,
-      window,
-      events_manager,
-      layers: Vec::new()
-    })
+    unsafe { gl_call!(gl::GetIntegerv(gl::MAX_VERTEX_ATTRIBS, &mut nr_attributes)); }
+    println!("\tMaximum number of vertex attributes (input variable for the vertex shader) supported: {} 4-component (vec4) vertex attributes available", nr_attributes);
+
+    let mut nr_texture_units: i32 = 0;
+    unsafe { gl_call!(gl::GetIntegerv(gl::MAX_TEXTURE_IMAGE_UNITS, &mut nr_texture_units)); }
+    // Divide batches by this number (modulus with remainder being rendered as a batch as well)
+    println!("\tMaximum number of texture units supported: {}", nr_texture_units);
+
+    println!("Packaging and returning PhoenixEngine ...");
+
+    Ok(
+      Box::new(
+        PhoenixCore {
+          window_manager,
+          layers: LayerStack::new(),
+          logger: Logger::new()
+        }
+      )
+    )
   }
 
-  pub fn run(&mut self) {
-    while !self.window.lock().unwrap().should_close() {
-      self.events_manager.handle();
-      // self.update();
+  pub fn run(&self) {
+    // info!(&self.logger, "Running ...");
+    println!("Running ...");
+
+    let polygon_mode = (gl::FRONT_AND_BACK, gl::FILL);
+    let clear_color = [ 0.0, 0.0, 0.0, 1.0 ];
+
+    while !self.window_manager.window.lock().unwrap().should_close() {
+      self.window_manager.glfw.lock().unwrap().poll_events();
 
       unsafe {
         // Wireframe mode
-        // gl::PolygonMode(gl::FRONT_AND_BACK, gl::LINE);
+        // gl_call!(gl::PolygonMode(gl::FRONT_AND_BACK, gl::LINE));
 
         // Regular mode
-        gl::PolygonMode(gl::FRONT_AND_BACK, gl::FILL);
-
-        gl::ClearColor(0.0, 0.0, 0.0, 0.4);
-        // check_gl_error();
-
-        gl::Clear(gl::DEPTH_BUFFER_BIT);
-        // check_gl_error();
+        gl_call!(gl::PolygonMode(polygon_mode.0, polygon_mode.1));
         
-        gl::Clear(gl::COLOR_BUFFER_BIT);
-        // check_gl_error();
+        gl_call!(gl::ClearColor(clear_color[0], clear_color[1], clear_color[2], clear_color[3]));
+
+        gl_call!(gl::Clear(gl::COLOR_BUFFER_BIT | gl::DEPTH_BUFFER_BIT));
       }
 
-      self.window.lock().unwrap().swap_buffers();
-      self.events_manager.accumulate();
+      self.window_manager.window.lock().unwrap().swap_buffers();
     }
   }
 }
 
-/// Temporary function
-fn rgba_u8_as_u32(rgba_data: Vec<u8>) -> Vec<u32> {
-  rgba_data.chunks(4).map(|rgba| {
-      (rgba[0] as u32) << 24 | // Red
-      (rgba[1] as u32) << 16 | // Green
-      (rgba[2] as u32) << 8  | // Blue
-      (rgba[3] as u32)         // Alpha
-  }).collect()
-}
+/*
+
+Old loads:
+
+/*
+
+    let texture = Texture::new("C:/dev/phoenix/phoenix_engine/assets/textures/goofy.jpg", TextureType::Diffuse);
+    texture.activate(0);
+
+    let vertices = RawVertexData {
+      data: vec![
+        -0.5, -0.5,  0.0,   0.0, 0.0,
+        -0.5,  0.5,  0.0,   0.0, 1.0,
+        0.5,  0.5,  0.0,   1.0, 1.0,
+        0.5, -0.5,  0.0,   1.0, 0.0,
+      ],
+      stride: 5, // 3 for position + 2 for texcoord
+    };
+    
+    let indices = Some(vec![0, 2, 1, 0, 3, 2]);
+    
+    let material = Material {
+      r#type: MaterialType::Basic,
+      shader: ShaderProgram::new("C:/dev/phoenix/phoenix_engine/shaders/vertex.glsl", "C:/dev/phoenix/phoenix_engine/shaders/fragment.glsl"),
+      uniforms: UniformCollection {
+        matrices: UniformMatrices {
+          model: cgmath::Matrix4::identity(),
+          view: cgmath::Matrix4::identity(),
+          projection: cgmath::Matrix4::identity(),
+        },
+        other: std::collections::HashMap::new(),
+      },
+    };
+
+    */
+
+Old rendering loop:
+
+/*
+    let mut elapsed_time = 0.0;
+    let mut last_frame = Instant::now();
+    let mut frame_count = 0;
+    let mut fps_timer = Instant::now();
+
+    let mut camera = PerspectiveCamera::new(cgmath::point3(0.0, 0.0, 3.0), cgmath::point3(0.0, 0.0, 0.0), cgmath::vec3(0.0, 1.0, 0.0), 45.0, (self.window_manager.width / self.window_manager.height) as f32, 0.1, 100.0); // Adjust as necessary
+    
+    let mut scene = Scene::new();
+
+    scene.static_game_objects.push(StaticGameObject::new(vertices, indices, Some(material)));
+
+    let mut delta_time: f32 = 0.0016;
+    */
+
+    while !self.window_manager.window.lock().unwrap().should_close() {
+      self.window_manager.glfw.lock().unwrap().poll_events();
+      /*
+      let now = Instant::now();
+      delta_time = (now - last_frame).as_secs_f32();
+      last_frame = now;
+
+      // Increment frame count
+      frame_count += 1;
+
+      // Every second, calculate and print FPS
+      if fps_timer.elapsed() >= Duration::from_secs(1) {
+        let fps = frame_count as f32 / fps_timer.elapsed().as_secs_f32();
+        print!("\rFPS: {:.2}", fps);
+        io::stdout().flush().unwrap();
+
+        // Reset FPS timer and frame count
+        fps_timer = Instant::now();
+        frame_count = 0;
+      }
+
+      elapsed_time += delta_time; // ~6000fps
+
+      let angle = cgmath::Rad(elapsed_time);
+      let rotation_matrix = cgmath::Matrix4::from_angle_z(angle);
+
+      camera.position.z -= 1.0 * delta_time;
+      camera.update_view_matrix();
+
+      for object in scene.static_game_objects.iter_mut() {
+        let angle = cgmath::Rad(elapsed_time);
+        let rotation = cgmath::Quaternion::from_axis_angle(Vector3::unit_y(), angle);
+        // object.set_transform();
+        object.transform.position.x += 0.5 * delta_time;
+        object.set_transform(Transform{
+          position: object.transform.position,
+          rotation,
+          scale: cgmath::vec3(1.0, 1.0, 1.0)
+        });
+      }
+
+      */
+
+      unsafe {
+        // Wireframe mode
+        // gl_call!(gl::PolygonMode(gl::FRONT_AND_BACK, gl::LINE));
+
+        // Regular mode
+        gl_call!(gl::PolygonMode(polygon_mode.0, polygon_mode.1));
+        
+        gl_call!(gl::ClearColor(clear_color[0], clear_color[1], clear_color[2], clear_color[3]));
+
+        gl_call!(gl::Clear(gl::COLOR_BUFFER_BIT | gl::DEPTH_BUFFER_BIT));
+      }
+      
+      // Renderer::render(&camera, &scene);
+
+*/
