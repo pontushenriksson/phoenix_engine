@@ -4,7 +4,10 @@ version = "0.1.0"
 edition = "2021"
 
 [dependencies]
+eframe = "0.29.1"
 egui = "0.29.1"
+image = "0.25.5"
+weezl = "0.1.8"
 egui_glfw = "0.55.2"
 egui_glow = "0.29.1"
 gl = "0.14.0"
