@@ -1,109 +1,64 @@
-use egui::Context as EguiContext;
-use egui_glow::Painter as EguiPainter;
-use glfw::Context as _;
-use std::sync::Arc;
+use eframe::egui;
+use eframe::NativeOptions;
+use image::ImageReader;
+use std::path::Path;
 
-pub struct EguiIntegration {
-    egui_context: EguiContext,
-    painter: EguiPainter,
+struct MyApp {
+    logo_texture: Option<egui::TextureHandle>,
 }
 
-impl EguiIntegration {
-    pub fn new(window: &mut glfw::Window) -> Self {
-        let egui_context = egui::Context::default();
-        let painter = unsafe {
-            EguiPainter::new(
-                Arc::new(egui_glow::painter::Context::from_loader_function(|s| window.get_proc_address(s))),
-                "egui_painter",
-                None,
-                true,
-            )
-            .unwrap()
-        };
-
-        Self { egui_context, painter }
-    }
-
-    pub fn begin_frame(&mut self, window: &glfw::Window) {
-        let raw_input = translate_glfw_input(window);
-        self.egui_context.begin_pass(raw_input);
-    }
-    
-
-    pub fn end_frame(&mut self, window: &mut glfw::Window) {
-        let output = self.egui_context.end_pass();
-        let shapes = output.shapes;
-        let clipped_shapes = self.egui_context.tessellate(shapes, 1.0);
-
-        let (width, height) = window.get_framebuffer_size();
-        unsafe {
-            gl::Viewport(0, 0, width, height);
-        }
-
-        self.painter.paint_and_update_textures(
-            [width as u32, height as u32],
-            1.0,
-            &clipped_shapes,
-            &output.textures_delta,
-        );
-
-        if !output.platform_output.copied_text.is_empty() {
-            window.set_clipboard_string(&output.platform_output.copied_text);
-        }
+impl Default for MyApp {
+    fn default() -> Self {
+        Self { logo_texture: None }
     }
 }
 
-fn translate_glfw_input(window: &glfw::Window) -> egui::RawInput {
-    let (width, height) = window.get_framebuffer_size();
-    let (scale_x, _) = window.get_content_scale();
-
-    egui::RawInput {
-        screen_rect: Some(egui::Rect::from_min_size(
-            egui::pos2(0.0, 0.0),
-            egui::vec2(width as f32 / scale_x, height as f32 / scale_x),
-        )),
-        focused: true, // Assume the window is focused
-        modifiers: egui::Modifiers::default(),
-        events: vec![], // Populate this with input events as needed
-        ..Default::default()
-    }
-}
-
-
-
-fn main() {
-    let mut glfw = glfw::init(glfw::fail_on_errors).unwrap();
-
-    glfw.window_hint(glfw::WindowHint::ContextVersion(4, 6));
-    glfw.window_hint(glfw::WindowHint::OpenGlProfile(glfw::OpenGlProfileHint::Core));
-
-    let (mut window, _events) = glfw
-        .create_window(800, 600, "Game Engine with Egui", glfw::WindowMode::Windowed)
-        .expect("Failed to create GLFW window");
-    
-    window.make_current();
-    gl::load_with(|s| window.get_proc_address(s) as *const _);
-
-    let mut egui_integration = EguiIntegration::new(&mut window);
-
-    while !window.should_close() {
-        glfw.poll_events();
-
-        egui_integration.begin_frame(&window);
-
-        egui::CentralPanel::default().show(&egui_integration.egui_context, |ui| {
-            ui.label("Hello, egui!");
-            if ui.button("Click me").clicked() {
-                println!("Button clicked!");
+impl MyApp {
+    fn load_logo(&mut self, ctx: &egui::Context) {
+        if self.logo_texture.is_none() {
+            let image_path = Path::new("logo.png");
+            if let Ok(image_reader) = ImageReader::open(image_path) {
+                if let Ok(image) = image_reader.decode() {
+                    let size = [image.width() as usize, image.height() as usize];
+                    let pixels = image.to_rgba8().as_flat_samples().as_slice().to_vec();
+                    let color_image = egui::ColorImage::from_rgba_unmultiplied(size, &pixels);
+                    self.logo_texture = Some(ctx.load_texture("logo", color_image, Default::default()));
+                } else {
+                    eprintln!("Failed to decode image at {:?}", image_path);
+                }
+            } else {
+                eprintln!("Failed to open image at {:?}", image_path);
             }
-        });
-
-        unsafe {
-            gl::ClearColor(0.1, 0.2, 0.3, 1.0);
-            gl::Clear(gl::COLOR_BUFFER_BIT | gl::DEPTH_BUFFER_BIT);
         }
-
-        egui_integration.end_frame(&mut window);
-        window.swap_buffers();
     }
+}
+
+impl eframe::App for MyApp {
+    fn update(&mut self, ctx: &egui::Context, _frame: &mut eframe::Frame) {
+        self.load_logo(ctx);
+
+        egui::CentralPanel::default().show(ctx, |ui| {
+            if let Some(texture) = &self.logo_texture {
+                ui.image(texture);
+            } else {
+                ui.label("Failed to load logo image.");
+            }
+
+            ui.add_space(10.0);
+            ui.heading("Phoenix Engine");
+        });
+    }
+}
+
+fn main() -> eframe::Result<()> {
+    let native_options = NativeOptions {
+        viewport: egui::ViewportBuilder::default().with_inner_size(egui::vec2(1920.0, 1080.0)),
+        ..Default::default()
+    };
+
+    eframe::run_native(
+        "Phoenix Engine",
+        native_options,
+        Box::new(|_cc| Ok(Box::new(MyApp::default()))),
+    )
 }
