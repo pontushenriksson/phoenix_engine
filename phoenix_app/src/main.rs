@@ -16,7 +16,7 @@ impl Default for MyApp {
 impl MyApp {
     fn load_logo(&mut self, ctx: &egui::Context) {
         if self.logo_texture.is_none() {
-            let image_path = Path::new("logo.png");
+            let image_path = Path::new("../assets/icons/icon.png");
             if let Ok(image_reader) = ImageReader::open(image_path) {
                 if let Ok(image) = image_reader.decode() {
                     let size = [image.width() as usize, image.height() as usize];

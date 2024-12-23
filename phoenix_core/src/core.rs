@@ -8,6 +8,7 @@ use cgmath::*;
 
 use crate::assets::loader::RawVertexData;
 use crate::debugger::logger::*;
+use crate::graphics::object::StaticGameObject;
 use crate::info;
 use crate::debugger::debugger::Debugger;
 use crate::debugger::debugger::PhoenixError;
@@ -15,24 +16,15 @@ use crate::debugger::debugger::PhoenixError;
 use crate::gl_call;
 use crate::assets::loader::AssetLoader;
 use crate::graphics::camera::PerspectiveCamera;
-use crate::graphics::data::*;
-use crate::graphics::mesh::*;
+use crate::graphics::{data::*, shader};
+use crate::graphics::mesh::{self, StaticMesh};
 use crate::graphics::renderer::Renderer;
 use crate::graphics::shader::*;
 use crate::graphics::texture::*;
 use crate::layers::layer;
-use crate::scenes::scene::{Scene, StaticGameObject, Transform};
+// use crate::scenes::scene::{Scene, StaticGameObject};
 use crate::window::window::*;
 use crate::layers::layer::*;
-
-/// Move to mesh.rs later
-#[derive(Debug)]
-pub struct Mesh {
-  pub vao: VertexArrayObject,
-  pub vbos: Vec<VertexBufferObject>,
-  pub ebo: Option<ElementBufferObject>,
-  pub attributes: Vec<Vec<VertexAttributeDescriptor>> // Attributes for each VBO
-}
 
 /// Loading glTF Models
 /// For each buffer in a glTF file:
@@ -41,9 +33,13 @@ pub struct Mesh {
 /// Create VertexAttributeDescriptors for the layout.
 /// Use link_vbo or link_separate_vbo based on interleaving.
 
+const TRIANGLE_MODE: bool = true;
+
 pub struct PhoenixCore{
   window_manager: WindowManager,
-  layers: LayerStack,
+  renderer: Renderer,
+  pub game_layer: Box<GameLayer>,
+  ui_layer: Box<UiLayer>,
   logger: Logger,
 }
 
@@ -98,36 +94,36 @@ impl PhoenixCore {
       Box::new(
         PhoenixCore {
           window_manager,
-          layers: LayerStack::new(),
-          logger: Logger::new()
+          renderer: Renderer::new(),
+          game_layer: GameLayer::new(),
+          ui_layer: UiLayer::new(),
+          logger: Logger::new(),
         }
       )
     )
   }
 
-  pub fn run(&self) {
-    // info!(&self.logger, "Running ...");
+  pub fn add_static_game_object(&mut self, object: Box<StaticGameObject>) {
+    self.game_layer.current_scene().unwrap().add_static_game_object(object);
+  }
+
+  pub fn add_shader_program(&mut self, shader: ShaderProgram) {
+    self.game_layer.current_scene().unwrap().add_shader_program(shader);
+  }
+
+  pub fn run(&mut self) {
     println!("Running ...");
 
-    let polygon_mode = (gl::FRONT_AND_BACK, gl::FILL);
-    let clear_color = [ 0.0, 0.0, 0.0, 1.0 ];
-
     while !self.window_manager.window.lock().unwrap().should_close() {
-      self.window_manager.glfw.lock().unwrap().poll_events();
+      self.window_manager.events_manager.handle();
+      self.renderer.clear();
 
-      unsafe {
-        // Wireframe mode
-        // gl_call!(gl::PolygonMode(gl::FRONT_AND_BACK, gl::LINE));
+      // Update positions etc.
 
-        // Regular mode
-        gl_call!(gl::PolygonMode(polygon_mode.0, polygon_mode.1));
-        
-        gl_call!(gl::ClearColor(clear_color[0], clear_color[1], clear_color[2], clear_color[3]));
-
-        gl_call!(gl::Clear(gl::COLOR_BUFFER_BIT | gl::DEPTH_BUFFER_BIT));
-      }
+      self.renderer.render(self.game_layer.current_scene().unwrap());
 
       self.window_manager.window.lock().unwrap().swap_buffers();
+      self.window_manager.events_manager.accumulate();
     }
   }
 }

@@ -3,10 +3,12 @@ use gl;
 use glfw::{Context, Glfw, GlfwReceiver, PWindow, WindowEvent};
 use image::{self, GenericImageView};
 
+use crate::events::manager::EventsManager;
+
 pub struct WindowManager {
   pub glfw: Arc<Mutex<Glfw>>,
   pub window: Arc<Mutex<PWindow>>,
-  pub receiver: GlfwReceiver<(f64, WindowEvent)>,
+  pub events_manager: EventsManager,
   pub width: u32,
   pub height: u32
 }
@@ -77,10 +79,12 @@ impl WindowManager {
     }
     */
 
+    let events_manager = EventsManager::new(glfw.clone(), window.clone(), receiver);
+
     WindowManager {
       glfw,
       window,
-      receiver,
+      events_manager,
       width: window_width,
       height: window_height
     }

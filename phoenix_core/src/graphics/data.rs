@@ -96,6 +96,7 @@ impl VertexAttribute {
     pointer: *const std::ffi::c_void      // The offset of where the position data begins in the buffer. If the position data is at the start of the data array this value is just 0
   ) -> VertexAttribute {
     unsafe {
+      gl::EnableVertexAttribArray(location);
       gl::VertexAttribPointer(location, size, type_of_data, normalized, stride, pointer);
     }
 
@@ -109,7 +110,7 @@ impl VertexAttribute {
       descriptor.data_type,
       descriptor.normalized,
       descriptor.stride,
-      descriptor.offset as *const std::ffi::c_void
+      (descriptor.offset * std::mem::size_of::<f32>()) as *const std::ffi::c_void
     )
   }
 
@@ -191,7 +192,7 @@ impl VertexArrayObject {
     }
   }
 
-  pub fn unbind(&self) {
+  pub fn unbind() {
     unsafe {
       gl::BindVertexArray(0);
     }

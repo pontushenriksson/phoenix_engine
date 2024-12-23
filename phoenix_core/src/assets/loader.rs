@@ -5,7 +5,7 @@ use tokio::fs;
 use async_trait::async_trait;
 use futures::future::join_all;
 
-use crate::graphics::mesh::Mesh;
+use crate::graphics::mesh::StaticMesh;
 use crate::graphics::texture::{Texture, TextureType};
 
 /// Stores loaded vertex data.
@@ -69,7 +69,7 @@ impl AssetLoader {
 
 pub async fn load_gltf(
   path: &str,
-) -> Mesh {
+) -> Box<StaticMesh> {
   let gltf_data = fs::read(path).await.expect("Failed to read glTF file");
   let gltf = Arc::new(Gltf::from_slice(&gltf_data).expect("Failed to parse glTF file"));
 
@@ -121,11 +121,11 @@ pub async fn load_gltf(
           let stride = 8; // 3 for position + 3 for normals + 2 for tex coords
           let raw_vertex_data = RawVertexData::new(vertex_data, stride);
 
-          // Create the mesh with the new `Mesh` structure
-          return Mesh::new(raw_vertex_data, Some(indices));
+          // Create the StaticMesh with the new `Mesh` structure
+          return StaticMesh::new(raw_vertex_data, Some(indices));
       }
   }
-  panic!("No valid mesh data found");
+  panic!("No valid StaticMesh data found");
 }
 
 pub fn load_textures_from_gltf(

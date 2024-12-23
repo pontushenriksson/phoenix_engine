@@ -1,51 +1,73 @@
-pub trait Layer {
-  fn on_attach(&self) {
+use crate::scenes::scene::Scene;
 
+pub struct GameLayer {
+  scenes: Vec<Box<Scene>>,
+  current_scene: usize,
+}
+
+impl GameLayer {
+  pub fn new() -> Box<GameLayer> {
+    Box::new(
+      GameLayer {
+        scenes: Vec::new(),
+        current_scene: 0,
+      }
+    )
   }
 
-  fn on_update(&self) {
-
+  pub fn push_scene(&mut self, scene: Box<Scene>) {
+    self.scenes.push(scene);
+    self.current_scene = self.scenes.len() - 1;
   }
 
-  fn on_event(&self, /* event: &Event */) {
-    
+  pub fn pop_scene(&mut self) {
+    self.scenes.pop();
+    self.current_scene = self.scenes.len() - 1;
   }
 
-  fn on_detach(&self) {
-    
+  pub fn get_scene(&self, index: usize) -> Option<&Box<Scene>> {
+    self.scenes.get(index)
+  }
+
+  pub fn current_scene(&mut self) -> Option<&mut Box<Scene>> {
+    self.scenes.get_mut(self.current_scene)
   }
 }
+
+pub struct UiLayer {
+  // egui context ?
+  // egui painter ?
+}
+
+impl UiLayer {
+  pub fn new() -> Box<UiLayer> {
+    // TODO:
+    Box::new(
+      UiLayer {
+
+      }
+    )
+  }
+}
+
+/*
+
 
 pub struct LayerHandle(usize);
 
 pub struct LayerStack {
-  stack: Vec<Box<dyn Layer>>
+  layers: Vec<GameLayer>,
+  overlays: Vec<UiLayer>,
 }
 
 impl LayerStack {
   pub fn new() -> LayerStack {
     LayerStack {
-      stack: Vec::new()
-    }
-  }
-
-  pub fn push<T: Layer + 'static>(&mut self, layer: Box<T>) -> LayerHandle {
-    self.stack.push(layer);
-    LayerHandle(self.stack.len() - 1)
-  }
-
-  pub fn pop(&mut self) {
-    self.stack.pop();
-  }
-
-  pub fn get() {
-    
-  }
-
-  pub fn is_handle_valid(&self, handle: &LayerHandle) -> bool {
-    match self.stack.get(handle.0) {
-      Some(_) => true,
-      None => false
+      layers: Vec::new(),
+      overlays: Vec::new()
     }
   }
 }
+
+*/
+

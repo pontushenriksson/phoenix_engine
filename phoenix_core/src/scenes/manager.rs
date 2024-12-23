@@ -1,7 +1,7 @@
 use crate::scenes::scene::*;
 
 pub struct SceneManager {
-  scenes: Vec<Scene>,
+  // scenes: Vec<Scene>,
   current: usize,
 }
 
