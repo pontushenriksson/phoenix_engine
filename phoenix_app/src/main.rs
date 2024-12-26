@@ -2,6 +2,8 @@ mod config;
 use glfw::Context;
 use gl;
 
+use crate::config::*;
+
 fn fail_on_errors(error: glfw::Error, description: String) {
     eprintln!("GLFW Error ({}): {}", error, description);
 }
@@ -15,6 +17,27 @@ pub enum PhoenixRunningMode {
     Edit,
     Game,
     Debug,
+}
+
+pub struct PhoenixGameEngineApplication {
+// App
+    window: glfw::PWindow,
+    receiver: glfw::GlfwReceiver<(f64, glfw::WindowEvent)>,
+    width: u32,
+    height: u32,
+    running_mode: PhoenixRunningMode,
+    static_game_objects: bool,                                  // Vec<StaticGameObject>
+    dynamic_game_objects: bool,                                 // Vec<DynamicGameObject>
+    editor_camera: bool,                                        // Camera (PerspectiveCamera)
+    game_camera: bool,                                          // Camera (PerspectiveCamera)
+    asset_loader: bool,                                         // Asset Loader
+
+// UI
+    egui_painter: egui_glfw::Painter,
+    egui_context: egui::Context,
+
+// Engine
+    engine_config: EngineConfig,
 }
 
 fn main() {
