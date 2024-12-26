@@ -7,9 +7,14 @@ fn fail_on_errors(error: glfw::Error, description: String) {
 }
 
 pub mod ui {
-    pub mod main_menu;
-    pub mod settings;
+    pub mod themes;
     pub mod hud;
+}
+
+pub enum PhoenixRunningMode {
+    Edit,
+    Game,
+    Debug,
 }
 
 fn main() {
@@ -40,12 +45,43 @@ fn main() {
     window.set_icon_from_pixels(vec![config.icon]);
 
     // Launch UI here
+    // let mut ui;
+
+    use crate::ui::hud::*;
+    let mut hud = Hud::new();
+
+    let mode = PhoenixRunningMode::Edit;
 
     while !window.should_close() {
         glfw.poll_events();
         for (time, event) in glfw::flush_messages(&receiver) {
             println!("{:?}", (time, event));
         }
+
+        match /* self. */ mode {
+            PhoenixRunningMode::Edit => {
+                // Render ui
+                // hud.draw();
+                
+                // Render game stuff
+            },
+            PhoenixRunningMode::Game => {
+                // Render ui
+                // hud.draw();
+                
+                // Render game stuff
+            },
+            PhoenixRunningMode::Debug => {
+                // Render ui
+                // hud.draw();
+                
+                // Render game stuff
+            }
+        }
+
+        // Finalize frame: Optionally sync framerate for fixed framerates
         window.swap_buffers();
     }
+
+    // clean_up();
 }
