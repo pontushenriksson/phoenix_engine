@@ -2,12 +2,12 @@
 
 # Phoenix Engine
 
-Phoenix är en simpel spelmotor skriven i programspråket Rust. Motorn nyttjar OpenGL bindningar för dess `rastrering` och Slint språket för dess gränsnitt. För oss är Phoenix ett perfekt projekt för att finslipa våra utvecklingskunskaper. Spelmotorn blir vårat gymnasiearbete på NTI Gymnasiet i Sundsvall 2024.
+Phoenix är en simpel spelmotor skriven i programspråket Rust. Motorn nyttjar OpenGL för dess `rastrering` och Egui för dess gränsnitt. För oss är Phoenix ett perfekt projekt för att finslipa våra utvecklingskunskaper. Spelmotorn blir vårat gymnasiearbete på NTI Gymnasiet i Sundsvall 2024.
 
 Under projektets gång kommer vi att lära oss mer om:
 
 1. Programspråket Rust.
-2. Grafisk programmering med OpenGL och Slint.
+2. Grafisk programmering med OpenGL och Egui.
 3. Korrekt användning av GitHub issues, pull requests, merge requests och commits.
 
 Copyright © 2024 [Neo Mannskär](https://github.com/neomannskar) & [Pontus Henriksson](https://github.com/pontushenriksson)
@@ -22,7 +22,7 @@ Copyright © 2024 [Neo Mannskär](https://github.com/neomannskar) & [Pontus Henr
 
 - [The Rust Book](https://doc.rust-lang.org/book/)
 - [Learn OpenGL](https://learnopengl.com/Getting-started/OpenGL)
-- [Slint](https://releases.slint.dev/)
+- [Egui](https://docs.rs/egui/latest/egui/)
 - [Proper Github Etiquette](https://betterprogramming.pub/git-workflow-etiquette-f22d96b8b0b8)
 
 #### Videor
@@ -40,9 +40,9 @@ Copyright © 2024 [Neo Mannskär](https://github.com/neomannskar) & [Pontus Henr
 - Simpelt användargränssnitt
 - Rendering av dynamiska objekt
 - Simpel fysikmotor
+- Belysning
+- Text-rendering
 
 ### Eventuella funktioner
 
-- Node-system för entiteter
-- Skriptmotor med [The Lotus Programming Language](https://github.com/totem-studios/lotus)
-- Animationsmotor
+- Animationer
