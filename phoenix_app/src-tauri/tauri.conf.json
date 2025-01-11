@@ -10,7 +10,7 @@
     "withGlobalTauri": true,
     "windows": [
       {
-        "title": "phoenix-engine",
+        "title": "Phoenix Engine v0.1.0",
         "width": 800,
         "height": 600
       }
