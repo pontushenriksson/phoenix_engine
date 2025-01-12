@@ -4,37 +4,65 @@
     <meta charset="UTF-8" />
     <link rel="stylesheet" href="styles.css" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Tauri App</title>
-    <link rel="shortcut icon" href="../../assets/icons/logo.ico" type="image/x-icon">
-    <script type="module" src="/main.js" defer></script>
+    <title>Phoenix Engine v0.1.0</title>
+    <script
+      src="https://kit.fontawesome.com/7799275d96.js"
+      crossorigin="anonymous"
+    ></script>
+    <link
+      rel="shortcut icon"
+      href="../../assets/icons/logo.ico"
+      type="image/x-icon"
+    />
+    <script type="module" src="main.js" defer></script>
   </head>
 
   <body>
-    <main class="container">
-      <h1>Welcome to Tauri</h1>
+    <div class="container">
+      <header>
+        <img src="./assets/logomark.svg" alt="" />
+        <p>Version: v0.1.0</p>
+      </header>
+      <main>
+        <button id="themeSwitcher">Byt tema</button>
 
-      <div class="row">
-        <a href="https://tauri.app" target="_blank">
-          <img src="/assets/tauri.svg" class="logo tauri" alt="Tauri logo" />
-        </a>
-        <a
-          href="https://developer.mozilla.org/en-US/docs/Web/JavaScript"
-          target="_blank"
-        >
-          <img
-            src="/assets/javascript.svg"
-            class="logo vanilla"
-            alt="JavaScript logo"
-          />
-        </a>
-      </div>
-      <p>Click on the Tauri logo to learn more about the framework</p>
-
-      <form class="row" id="greet-form">
-        <input id="greet-input" placeholder="Enter a name..." />
-        <button type="submit">Greet</button>
-      </form>
-      <p id="greet-msg"></p>
-    </main>
+        <div class="projects">
+          <div id="createProject" class="project">
+            <i class="createProjectIcon fa-solid fa-circle-plus"></i>
+            <h3>Skapa nytt projekt</h3>
+          </div>
+          <div class="project">
+            <div class="top">
+              <img src="./assets/thumbnails/counter-strike-3.jpg" alt="" />
+              <h3>Counter-Strike 3</h3>
+            </div>
+            <div class="bottom">
+              <a href="./editor/counter-strike-3.html">Öppna projekt</a>
+              <i class="fa-solid fa-gear"></i>
+            </div>
+          </div>
+          <div class="project">
+            <div class="top">
+              <img src="./assets/thumbnails/minecraft-2.jpg" alt="" />
+              <h3>Minecraft 2</h3>
+            </div>
+            <div class="bottom">
+              <a href="./editor/minecraft-2.html">Öppna projekt</a>
+              <i class="fa-solid fa-gear"></i>
+            </div>
+          </div>
+          <div class="project">
+            <div class="top">
+              <img src="./assets/thumbnails/fortnite-2.jpg" alt="" />
+              <h3>Fortnite 2</h3>
+            </div>
+            <div class="bottom">
+              <a href="./editor/fortnite-2.html">Öppna projekt</a>
+              <i class="fa-solid fa-gear"></i>
+            </div>
+          </div>
+        </div>
+      </main>
+    </div>
   </body>
 </html>
