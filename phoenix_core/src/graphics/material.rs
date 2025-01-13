@@ -1,37 +1,41 @@
-use futures::SinkExt;
-
-use crate::graphics::shaders::ShaderProgram;
-use crate::graphics::texture::Texture;
-use crate::graphics::buffers::UniformBufferObject;
+use crate::graphics::{
+  shaders::ShaderProgram,
+  buffers::UniformBufferObject,
+  texture::Sampler
+};
 
 pub struct Material {
-  shader: ShaderProgram,
-  textures: Vec<Texture>,
-  max_units: usize,
-  // uniform_data: UniformBufferObject
+  pub shader: ShaderProgram,
+  pub samplers: Vec<Box<dyn Sampler>>,
+  pub max_units: usize,
+  pub ubo: UniformBufferObject
 }
 
 impl Material {
-  pub fn new(shader: ShaderProgram, units: usize) -> Material {
+  pub fn new(
+    shader: ShaderProgram,
+    units: usize,
+    ubo: UniformBufferObject
+  ) -> Material {
     Material {
       shader,
-      textures: Vec::with_capacity(units),
+      samplers: Vec::with_capacity(units),
       max_units: units,
-      // uniform_data: UniformBufferObject::new(),
+      ubo,
     }
   }
 
-  pub fn add_texture(&mut self, texture: Texture) {
-    self.textures.push(texture);
+  pub fn add_sampler(&mut self, sampler: Box<dyn Sampler>) {
+    self.samplers.push(sampler);
   }
 
   pub fn bind(&self) {
     self.shader.activate();
-    for (i, texture) in self.textures
+    for (i, sampler) in self.samplers
       .iter()
       .enumerate()
     {
-      texture.bind(i as u32);
+      sampler.bind();
     }
   }
 }

@@ -5,13 +5,29 @@ use crate::{
     mesh::Mesh,
     window
   },
-  objects::{lights::PointLight, objects::StaticObject}
+  objects::{lights::PointLight, objects::GameObject}
 };
+
+pub struct PhoenixEngineInfo {}
+
+impl PhoenixEngineInfo {
+  pub fn get_vertex_attrib_count() -> i32 {
+    let mut nr_attributes: i32 = 0;
+    unsafe { gl::GetIntegerv(gl::MAX_VERTEX_ATTRIBS, &mut nr_attributes); }
+    nr_attributes
+  }
+
+  pub fn get_texture_unit_count() -> i32 {
+    let mut nr_attributes: i32 = 0;
+    unsafe { gl::GetIntegerv(gl::MAX_TEXTURE_IMAGE_UNITS, &mut nr_attributes); }
+    nr_attributes
+  }
+}
 
 pub struct PhoenixApplication {
   window: window::Window,
 
-  static_objects: Vec<StaticObject>,
+  game_objects: Vec<GameObject>,
   point_lights: Vec<PointLight>,
 }
 
@@ -31,15 +47,15 @@ impl PhoenixApplication {
             title,
             icon,
           ),
-          static_objects: Vec::new(),
+          game_objects: Vec::new(),
           point_lights: Vec::new(),
         }
       )
     )
   }
 
-  pub fn add_static_object(&mut self, static_object: StaticObject) {
-    self.static_objects.push(static_object);
+  pub fn add_static_object(&mut self, static_object: GameObject) {
+    self.game_objects.push(static_object);
   }
 
   pub fn add_point_light(&mut self, point: PointLight) {
@@ -56,8 +72,8 @@ impl PhoenixApplication {
       unsafe {
         gl::Clear(gl::COLOR_BUFFER_BIT | gl::DEPTH_BUFFER_BIT);
         
-        for static_object in &self.static_objects {
-          static_object.mesh.draw();
+        for game_object in &self.game_objects {
+          game_object.mesh.draw();
         }
 
         for point_light in &self.point_lights {

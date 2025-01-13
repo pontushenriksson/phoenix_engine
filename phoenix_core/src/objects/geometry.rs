@@ -1,16 +1,15 @@
 use cgmath::SquareMatrix;
 
-use crate::graphics::data::Attribute;
-use crate::graphics::mesh::{Mesh, StaticMesh};
-use crate::graphics::texture::Sampler;
+use crate::graphics::data::{Attribute, VertexDescriptor};
+use crate::graphics::mesh::{BufferType, Mesh};
 
 pub struct Quad {
-  pub mesh: StaticMesh,
+  pub mesh: Mesh<gl::types::GLfloat, gl::types::GLuint>,
   pub matrix: cgmath::Matrix4<f32>,
 }
 
 impl Quad {
-  pub fn new(sampler: Option<Box<dyn Sampler>>) -> Quad {
+  pub fn new() -> Quad {
     let vertices: [gl::types::GLfloat; 32] = [
     // Positions              Color                   Texture Coords
       -0.5, -0.5,  0.0,       1.0, 1.0, 1.0,          0.0, 0.0,
@@ -24,17 +23,20 @@ impl Quad {
       2, 3, 0
     ];
 
-    let attributes: [Attribute; 3] = [
-      Attribute::Vec3,
-      Attribute::Vec3,
-      Attribute::Vec2,
-    ];
+    let descriptor = VertexDescriptor {
+      attributes: vec![
+        Attribute::Vec3,
+        Attribute::Vec3,
+        Attribute::Vec2,
+      ],
+      stride: 8
+    };
 
-    let mesh = StaticMesh::new(
+    let mesh = Mesh::new(
+      BufferType::Static,
       vertices.to_vec(),
-      indices.to_vec(),
-      &attributes,
-      Some(vec![sampler.unwrap()])
+      Some(indices.to_vec()),
+      descriptor,
     );
 
     Quad {

@@ -2,6 +2,21 @@
 
 pub struct PointLight {
   pub icon: Quad,
+  // pub material: Material,
+  /*
+  
+  Some(
+          Box::new(
+            Sampler2D::<Diffuse>::new(
+              "../assets/icons/light bulb.png",
+              gl::TEXTURE_2D,
+              gl::RGBA,
+              gl::UNSIGNED_BYTE
+            )
+          )
+        )
+
+   */
   pub position: cgmath::Vector3<f32>,
   pub color: cgmath::Vector3<f32>,
   pub intensity: f32,
@@ -16,18 +31,8 @@ impl PointLight {
     attenuation: (f32, f32, f32)
   ) -> PointLight {
     PointLight {
-      icon: Quad::new(
-        Some(
-          Box::new(
-            Sampler2D::<Diffuse>::new(
-              "../assets/icons/light bulb.png",
-              gl::TEXTURE_2D,
-              gl::RGBA,
-              gl::UNSIGNED_BYTE
-            )
-          )
-        )
-      ),
+      icon: Quad::new(),
+      // material: Material::new(),
       position,
       color,
       intensity,

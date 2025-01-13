@@ -21,14 +21,16 @@ pub mod objects {
 mod tests {
   use tokio;
 
-  use crate::graphics::data::Attribute;
-  use crate::graphics::mesh::{Mesh, StaticMesh};
+  use crate::graphics::buffers::UniformBufferObject;
+use crate::graphics::data::{Attribute, VertexDescriptor};
+  use crate::graphics::material::Material;
+use crate::graphics::mesh::{BufferType, Mesh};
 use crate::graphics::shaders::ShaderProgram;
   
-  use crate::core::PhoenixApplication;
+  use crate::core::{PhoenixApplication, PhoenixEngineInfo};
 use crate::graphics::texture::{Diffuse, Sampler, Sampler2D, Specular};
 use crate::objects::lights::PointLight;
-use crate::objects::objects::StaticObject;
+use crate::objects::objects::GameObject;
 use crate::objects::transform::Transform;
 
   #[tokio::test]
@@ -58,17 +60,48 @@ use crate::objects::transform::Transform;
       3, 0, 4,
     ];
 
-    let attributes: [Attribute; 4] = [
-      Attribute::Vec3,
-      Attribute::Vec3,
-      Attribute::Vec4,
-      Attribute::Vec2,
-    ];
+    let descriptor = VertexDescriptor {
+      attributes: vec![
+        Attribute::Vec3,
+        Attribute::Vec3,
+        Attribute::Vec4,
+        Attribute::Vec2,
+      ],
+      stride: 12,
+    };
 
-    let texture = Sampler2D::<Diffuse>::new("../assets/textures/bricks texture.jpg", 0, gl::RGBA, gl::UNSIGNED_BYTE);
+    let mesh = Mesh::new(
+      BufferType::Static,
+      vertices.to_vec(),
+      Some(indices.to_vec()),
+      descriptor,
+    );
+
+    let shader = ShaderProgram::new(
+      "../assets/materials/planks/shaders/shader.vert",
+      "../assets/materials/planks/shaders/shader.frag",
+    );
+
+    let diffuse = Sampler2D::<Diffuse>::new("../assets/textures/bricks texture.jpg", 0, gl::RGBA, gl::UNSIGNED_BYTE);
     let specular = Sampler2D::<Specular>::new("../assets/textures/bricks specular.png", 1, gl::RGBA, gl::UNSIGNED_BYTE);
 
+    let u_data = [
+      0.42,
+      1.2,
+      0.3,
+    ];
 
+    let ubo = UniformBufferObject::new((u_data.len() * std::mem::size_of::<f32>()) as isize);
+    // ubo.set_data(0, &u_data);
+
+    let mut material = Material::new(shader, PhoenixEngineInfo::get_texture_unit_count() as usize, ubo);
+    material.add_sampler(diffuse);
+    material.add_sampler(specular);
+    // material.set_ubo_data();
+
+    let game_object = GameObject::new(mesh, material);
+    
+    app.add_static_object(game_object);
 
     app.run();
   }

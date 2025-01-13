@@ -1,56 +1,24 @@
-use futures::Stream;
+use crate::{graphics::{material::Material, mesh::Mesh}, objects::transform::Transform};
 
-use crate::graphics::mesh::{StaticMesh, DynamicMesh, StreamMesh};
-use crate::objects::transform::Transform;
-
-// #[derive(Clone)]
-pub struct StaticObject {
-  pub mesh: StaticMesh,
+pub struct GameObject {
+  pub mesh: Mesh<gl::types::GLfloat, gl::types::GLuint>,
+  pub material: Material,
   pub transform: Transform,
 }
 
-impl StaticObject {
+impl GameObject {
   pub fn new(
-    mesh: StaticMesh,
-    transform: Transform,
-  ) -> StaticObject {
-    StaticObject {
+    mesh: Mesh<gl::types::GLfloat, gl::types::GLuint>,
+    material: Material,
+  ) -> GameObject {
+    GameObject {
       mesh,
-      transform
+      material,
+      transform: Transform::identity()
     }
   }
-}
 
-pub struct DynamicObject {
-  pub mesh: DynamicMesh,
-  pub transform: Transform,
-}
-
-impl DynamicObject {
-  pub fn new(
-    mesh: DynamicMesh,
-    transform: Transform,
-  ) -> DynamicObject {
-    DynamicObject {
-      mesh,
-      transform
-    }
-  }
-}
-
-pub struct StreamObject {
-  pub mesh: StreamMesh,
-  pub transform: Transform,
-}
-
-impl StreamObject {
-  pub fn new(
-    mesh: StreamMesh,
-    transform: Transform,
-  ) -> StreamObject {
-    StreamObject {
-      mesh,
-      transform
-    }
+  pub fn with_transform(&mut self, transform: Transform) {
+    self.transform = transform
   }
 }

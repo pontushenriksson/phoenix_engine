@@ -84,7 +84,7 @@ pub trait Sampler {
     unit: gl::types::GLuint,
     format: gl::types::GLenum,
     pixel_image: gl::types::GLenum
-  ) -> Self where Self: Sized;
+  ) -> Box<Self> where Self: Sized;
 
   fn bind(&self);
 
@@ -104,13 +104,15 @@ impl<T> Sampler for Sampler2D<T> {
     unit: gl::types::GLuint,
     format: gl::types::GLenum,
     pixel_type: gl::types::GLenum,
-  ) -> Sampler2D<T> {
+  ) -> Box<Sampler2D<T>> {
     let texture = Texture::new(file_path, gl::TEXTURE_2D, format, pixel_type);
-    Sampler2D {
-      texture,
-      unit,
-      _marker: std::marker::PhantomData
-    }
+    Box::new(
+      Sampler2D {
+        texture,
+        unit,
+        _marker: std::marker::PhantomData
+      }
+    )
   }
 
   fn bind(&self) {
@@ -137,13 +139,15 @@ impl<T> Sampler for Sampler3D<T> {
     unit: gl::types::GLuint,
     format: gl::types::GLenum,
     pixel_type: gl::types::GLenum,
-  ) -> Sampler3D<T> {
+  ) -> Box<Sampler3D<T>> {
     let texture = Texture::new(file_path, gl::TEXTURE_3D, format, pixel_type);
-    Sampler3D {
-      texture,
-      unit,
-      _marker: std::marker::PhantomData
-    }
+    Box::new(
+      Sampler3D {
+        texture,
+        unit,
+        _marker: std::marker::PhantomData
+      }
+    )
   }
 
   fn bind(&self) {

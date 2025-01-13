@@ -1,62 +1,35 @@
 use gl;
 use cgmath;
 
-pub trait DataPrimitive: 'static {}
+pub trait RenderDataPrimitive: 'static + Copy {
+  fn to_i32_vec(vector: &[Self]) -> Vec<i32> {
+    panic!("Not implemented for this type!");
+  }
 
-impl DataPrimitive for i32 {}
-impl DataPrimitive for u32 {}
-impl DataPrimitive for f32 {}
+  fn to_u32_vec(vector: &[Self]) -> Vec<u32> {
+    panic!("Not implemented for this type!");
+  }
 
-pub struct RawVertexData<T> {
-  pub data: Vec<T>,
-  pub stride: usize,
+  fn to_f32_vec(vector: &[Self]) -> Vec<f32> {
+    panic!("Not implemented for this type!");
+  }
 }
 
-impl<T: DataPrimitive> RawVertexData<T> {
-  pub fn wrap(data: Vec<T>, stride: usize) -> RawVertexData<T> {
-    assert!(stride > 0, "Stride must be greater than 0.");
-    assert!(data.len() % stride == 0, "Data length must be a multiple of stride.");
-    RawVertexData {
-      data,
-      stride,
-    }
+impl RenderDataPrimitive for i32 {
+  fn to_i32_vec(vector: &[Self]) -> Vec<i32> {
+    vector.to_vec()
   }
-
-  /*
-
-  /// Extract positions (first 3 floats per vertex)
-  pub fn positions(&self) -> Vec<[T; 3]> {
-    self.data.chunks(self.stride).map(|chunk| {
-      [chunk[0], chunk[1], chunk[2]] // Assuming positions are the first 3 floats
-    }).collect()
-  }
-
-  /// Extract normals (next 3 floats per vertex after positions)
-  pub fn normals(&self) -> Vec<[T; 3]> {
-    self.data.chunks(self.stride).map(|chunk| {
-      [chunk[3], chunk[4], chunk[5]] // Assuming normals follow positions
-    }).collect()
-  }
-
-  /// Extract texture coordinates (next 2 floats after normals)
-  pub fn tex_coords(&self) -> Vec<[T; 2]> {
-    self.data.chunks(self.stride).map(|chunk| {
-      [chunk[6], chunk[7]] // Assuming tex coords follow normals
-    }).collect()
-  }
-
-  */
 }
 
-pub struct RawIndexData<T> {
-  pub data: Vec<T>,
+impl RenderDataPrimitive for u32 {
+  fn to_u32_vec(vector: &[Self]) -> Vec<u32> {
+    vector.to_vec()
+  }
 }
 
-impl<T: DataPrimitive> RawIndexData<T> {
-  pub fn wrap(data: Vec<T>) -> RawIndexData<T> {
-    RawIndexData {
-      data,
-    }
+impl RenderDataPrimitive for f32 {
+  fn to_f32_vec(vector: &[Self]) -> Vec<f32> {
+    vector.to_vec()
   }
 }
 
@@ -244,15 +217,29 @@ impl AttributeBuilder {
   }
 }
 
+pub struct VertexDescriptor {
+  pub attributes: Vec<Attribute>,
+  pub stride: i32,
+}
+
 #[derive(Clone)]
 pub struct VertexArrayObject(gl::types::GLuint);
 
 impl VertexArrayObject {
+  pub fn new() -> VertexArrayObject {
+    let mut id: u32 = 0;
+    unsafe {
+      gl::CreateVertexArrays(1, &mut id);
+    }
+
+    VertexArrayObject(id)
+  }
+
   pub fn from(
     usage: gl::types::GLenum,
     vertices: &[gl::types::GLfloat],
     indices: &[gl::types::GLuint],
-    attributes: &[Attribute],
+    descriptor: VertexDescriptor,
   ) -> VertexArrayObject {
     let mut id: u32 = 0;
     let mut buffers: [u32; 2] = [ 0, 0 ];
@@ -277,10 +264,10 @@ impl VertexArrayObject {
       );
     }
 
-    let stride: gl::types::GLsizei = attributes.iter().map(|a| a.size()).sum::<i32>() * std::mem::size_of::<gl::types::GLfloat>() as gl::types::GLsizei;
+    let stride: gl::types::GLsizei = descriptor.attributes.iter().map(|a| a.size()).sum::<i32>() * std::mem::size_of::<gl::types::GLfloat>() as gl::types::GLsizei;
 
     let mut offset = 0;
-    for (index, attribute) in attributes.iter().enumerate() {
+    for (index, attribute) in descriptor.attributes.iter().enumerate() {
       unsafe {
         gl::EnableVertexAttribArray(index as u32);
         gl::VertexAttribPointer(
