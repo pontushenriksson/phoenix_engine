@@ -14,7 +14,7 @@ out vec3 Color;                          // Pass-through color
 out vec2 TexCoord;                       // Pass-through texture coordinates
 
 void main() {
-  float uHeightScale = 0.2f;
+  float uHeightScale = 0.05f;
   // Sample the heightmap texture to get the height value (assuming grayscale heightmap)
   float height = texture(Texture0, aTexCoord).r; // Use the red channel for height
 

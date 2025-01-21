@@ -160,12 +160,11 @@ use crate::objects::objects::GameObject;
       gl::UNSIGNED_BYTE
     );
 
-    let ground_texture = Sampler2D::<Topography>::new(
+    let ground_texture = Sampler2D::<Diffuse>::new(
       "../assets/textures/bricks texture.jpg",
       gl::RGBA,
       gl::UNSIGNED_BYTE
     );
-
     
     let mut ground_material = Material::new(ground_shader, app.info.get_texture_unit_count() as usize, None);
     ground_material.add_sampler(ground_height_map);
@@ -173,9 +172,8 @@ use crate::objects::objects::GameObject;
 
     let ground = Ground::new(128, 128, ground_material).with_transform(
       Transform {
-        translation: cgmath::vec3(1.5, 0.5, 1.0),
-        rotation: cgmath::Quaternion::from_angle_y(cgmath::Deg(90.0)),
-        // rotation: cgmath::Quaternion::one(),
+        translation: cgmath::vec3(0.0, 0.2, 0.0),
+        rotation: cgmath::Quaternion::one(),
         scale: cgmath::vec3(1.0, 1.0, 1.0),
       }
     );

@@ -168,9 +168,17 @@ impl PhoenixApplication {
           object.draw(); */
         }
 
+        unsafe {
+          gl::Disable(gl::CULL_FACE);
+        }
+
         for ground in &mut self.grounds {
           ground.update_matrix();
           ground.draw(&camera);
+        }
+
+        unsafe {
+          gl::Enable(gl::CULL_FACE);
         }
       }
 
