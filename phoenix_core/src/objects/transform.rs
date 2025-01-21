@@ -2,9 +2,9 @@ use cgmath::One;
 
 #[derive(Clone)]
 pub struct Transform {
-  translation: cgmath::Vector3<f32>,
-  rotation: cgmath::Quaternion<f32>,
-  scale: cgmath::Vector3<f32>,
+  pub translation: cgmath::Vector3<f32>,
+  pub rotation: cgmath::Quaternion<f32>,
+  pub scale: cgmath::Vector3<f32>,
 }
 
 impl Transform {
