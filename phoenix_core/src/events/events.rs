@@ -1,10 +1,6 @@
 use glfw::{Action, Glfw, GlfwReceiver, Key, PWindow, WindowEvent};
 use rayon::prelude::*;
 use std::sync::{Arc, Mutex};
-use std::collections::HashMap;
-
-use crate::graphics::camera::Camera;
-
 pub struct EventManager {
   glfw: Arc<Mutex<Glfw>>,
   window: Arc<Mutex<PWindow>>,
@@ -32,28 +28,26 @@ impl EventManager {
     // Process events in parallel directly (without spawning a thread)
 
     events.into_par_iter().for_each(|(ts, event)| {
-      handle_event(ts, event);
+      handle_event(ts, event, &self.window);
     });
   }
 }
 
-pub fn handle_event(ts: f64, event: WindowEvent) {
-  println!("[Runtime] Handling event: \"{:?}\" at {:.3} seconds", event, ts);
+pub fn handle_event(_ts: f64, event: WindowEvent, _window: &Arc<Mutex<PWindow>>) {
+  // println!("[Runtime] Handling event: \"{:?}\" at {:.3} seconds", event, ts);
+  
+  static mut RUNNING_MODE: bool = false;
 
   match event {
     glfw::WindowEvent::Key(Key::Enter, _, Action::Press, _) => {
       unsafe {
-        gl::PolygonMode(gl::FRONT_AND_BACK, gl::LINE);
-      }
-    }
-    glfw::WindowEvent::Key(Key::Enter, _, Action::Repeat, _) => {
-      unsafe {
-        gl::PolygonMode(gl::FRONT_AND_BACK, gl::LINE);
-      }
-    }
-    glfw::WindowEvent::Key(Key::Enter, _, Action::Release, _) => {
-      unsafe {
-        gl::PolygonMode(gl::FRONT_AND_BACK, gl::FILL);
+        if RUNNING_MODE {
+          gl::PolygonMode(gl::FRONT_AND_BACK, gl::LINE);
+          RUNNING_MODE = false;
+        } else {
+          gl::PolygonMode(gl::FRONT_AND_BACK, gl::FILL);
+          RUNNING_MODE = true;
+        } 
       }
     }
     glfw::WindowEvent::FramebufferSize(width, height) => {

@@ -1,11 +1,9 @@
-use cgmath::SquareMatrix;
+use cgmath::{Quaternion, SquareMatrix};
 
 use crate::graphics::camera::Camera;
 use crate::graphics::data::{Attribute, VertexDescriptor};
 use crate::graphics::material::Material;
 use crate::graphics::mesh::{BufferType, Mesh};
-use crate::graphics::texture::{Topography, Sampler2D};
-
 use super::transform::Transform;
 
 pub struct Quad {
@@ -131,7 +129,7 @@ impl Plane {
 
 pub struct Ground {
   plane: Plane,
-  material: Material,
+  pub material: Material,
   pub transform: Transform,
 }
 
@@ -166,6 +164,14 @@ impl Ground {
     self
   }
 
+  pub fn set_rotation(&mut self, quaternion: Quaternion<f32>) {
+    self.transform = Transform {
+      translation: self.transform.translation,
+      rotation: quaternion,
+      scale: self.transform.scale
+    }
+  }
+
   pub fn update_matrix(&mut self) {
     let translation = cgmath::Matrix4::from_translation(self.transform.translation);
     let rotation = cgmath::Matrix4::from(self.transform.rotation);
@@ -178,7 +184,7 @@ impl Ground {
     self.plane.matrix = translation * rotation * scale;
   }
 
-  pub fn draw(&self, camera: &Camera) {
+  pub fn draw(&self, camera: &Camera, float: gl::types::GLfloat) {
     self.material.bind();
     self.material.shader.set_matrix4_f32("uModel", &self.plane.matrix);
     self.material.shader.set_matrix4_f32("uView", &camera.view);

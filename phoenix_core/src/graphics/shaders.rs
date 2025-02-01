@@ -37,7 +37,7 @@ impl ShaderProgram {
       let mut info_log = vec![0; 512];
 
       // Check vertex shader compilation
-      gl::GetShaderiv(vertex_shader, gl::COMPILE_STATUS, &mut success);
+      gl_call!(gl::GetShaderiv(vertex_shader, gl::COMPILE_STATUS, &mut success));
       if success == gl::FALSE as gl::types::GLint {
         gl::GetShaderInfoLog(vertex_shader, 512, std::ptr::null_mut(), info_log.as_mut_ptr() as *mut gl::types::GLchar);
         panic!("Vertex Shader Compilation Failed: {:?}", std::ffi::CStr::from_ptr(info_log.as_ptr()));
@@ -50,7 +50,7 @@ impl ShaderProgram {
       gl_call!(gl::CompileShader(fragment_shader));
 
       // Check fragment shader compilation
-      gl::GetShaderiv(fragment_shader, gl::COMPILE_STATUS, &mut success);
+      gl_call!(gl::GetShaderiv(fragment_shader, gl::COMPILE_STATUS, &mut success));
       if success == gl::FALSE as gl::types::GLint {
         gl::GetShaderInfoLog(fragment_shader, 512, std::ptr::null_mut(), info_log.as_mut_ptr() as *mut gl::types::GLchar);
         panic!("Fragment Shader Compilation Failed: {:?}", std::ffi::CStr::from_ptr(info_log.as_ptr()));
@@ -63,7 +63,7 @@ impl ShaderProgram {
 
       
       // Check program linking
-      gl::GetProgramiv(id, gl::LINK_STATUS, &mut success);
+      gl_call!(gl::GetProgramiv(id, gl::LINK_STATUS, &mut success));
       if success == gl::FALSE as gl::types::GLint {
         gl::GetProgramInfoLog(id, 512, std::ptr::null_mut(), info_log.as_mut_ptr() as *mut gl::types::GLchar);
         panic!("Shader Program Linking Failed: {:?}", std::ffi::CStr::from_ptr(info_log.as_ptr()));
@@ -145,6 +145,16 @@ impl ShaderProgram {
     }
 
     self.uniforms.insert(uniform.to_string(), location);
+  }
+
+  pub fn set_uniform_float(&self, uniform: &str, float: gl::types::GLfloat) {
+    let msg = format!("No entry found for key: {}", uniform);
+    unsafe {
+      gl_call!(gl::Uniform1f(
+        *self.uniforms.get(uniform).expect(&msg),
+        float
+      ));
+    }
   }
 
   pub fn set_matrix4_f32(&self, uniform: &str, matrix: &cgmath::Matrix4<f32>) {

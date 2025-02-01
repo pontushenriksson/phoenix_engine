@@ -36,7 +36,7 @@ impl<T> Cell<T> {
   pub fn alive(&mut self) -> &mut T {
     match self {
       Cell::Dead => {
-        panic!("Failed alive() unwrap on dead cell! at {} {}", file!(), line!());
+        panic!("Failed alive unwrap on dead cell! at {} {}", file!(), line!());
       }
       Cell::Alive(cell) => cell
     }
@@ -45,7 +45,7 @@ impl<T> Cell<T> {
 
 #[cfg(test)]
 mod tests {
-  use cgmath::{One, Rotation3};
+  use cgmath::One;
 use tokio;
 
   use crate::graphics::buffers::UniformBufferObject;
@@ -54,10 +54,10 @@ use tokio;
   use crate::graphics::mesh::{BufferType, Mesh};
   use crate::graphics::shaders::ShaderProgram;
   
-  use crate::core::{PhoenixApplication, PhoenixEngineInfo};
+  use crate::core::PhoenixApplication;
   use crate::graphics::texture::{Diffuse, Topography, Sampler, Sampler2D, Specular};
   use crate::objects::geometry::Ground;
-use crate::objects::objects::GameObject;
+  use crate::objects::objects::GameObject;
   use crate::objects::lights::PointLight;
   use crate::graphics::camera::Camera;
   use crate::objects::transform::Transform;
@@ -67,6 +67,8 @@ use crate::objects::objects::GameObject;
     let mut app = PhoenixApplication::new(
       1280,
       720,
+      // 1920,
+      // 1080,
       "Test Game lib.rs",
       "../assets/icons/icon.png",
     ).unwrap();
@@ -132,7 +134,7 @@ use crate::objects::objects::GameObject;
     let ubo = UniformBufferObject::new((u_data.len() * std::mem::size_of::<f32>()) as isize);
     // ubo.set_data(0, &u_data);
 
-    let mut material = Material::new(shader, app.info.get_texture_unit_count() as usize, Some(ubo));
+    let mut material = Material::new(shader, app.info.texture_unit_count() as usize, Some(ubo));
     material.add_sampler(diffuse);
     material.add_sampler(specular);
 
@@ -141,7 +143,7 @@ use crate::objects::objects::GameObject;
     let game_object = GameObject::new(mesh, material).with_transform(Transform::identity());
 
     let light = PointLight::new(
-      cgmath::vec3(0.5, 0.5, 0.5),
+      Transform::identity(),
       cgmath::vec3(1.0 ,1.0 , 1.0),
       0.95,
       (0.42, 1.2, 0.3)
@@ -165,12 +167,17 @@ use crate::objects::objects::GameObject;
       gl::RGBA,
       gl::UNSIGNED_BYTE
     );
+
+    let u_height_scale: [f32; 1] = [0.05];
+
+    let ground_ubo = UniformBufferObject::new((u_height_scale.len() * std::mem::size_of::<f32>()) as isize);
     
-    let mut ground_material = Material::new(ground_shader, app.info.get_texture_unit_count() as usize, None);
+    let mut ground_material = Material::new(ground_shader, app.info.texture_unit_count() as usize, Some(ground_ubo));
     ground_material.add_sampler(ground_height_map);
     ground_material.add_sampler(ground_texture);
+    ground_material.shader.create_uniform("uHeightScale");
 
-    let ground = Ground::new(128, 128, ground_material).with_transform(
+    let ground = Ground::new(64, 64, ground_material).with_transform(
       Transform {
         translation: cgmath::vec3(0.0, 0.2, 0.0),
         rotation: cgmath::Quaternion::one(),
@@ -179,8 +186,10 @@ use crate::objects::objects::GameObject;
     );
 
     let camera = Camera::new(
-      1280,
-      720,
+      // 1280,
+      // 720,
+      1920,
+      1080,
       (1280 / 720) as f32,
       cgmath::point3(0.0, 0.0, 3.0),
       45.0,

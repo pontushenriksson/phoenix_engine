@@ -3,6 +3,7 @@ use image::GenericImageView;
 use crate::gl_call;
 use crate::debugger::debugger::Debugger;
 
+#[allow(dead_code)]
 #[derive(Debug, Clone)]
 pub struct Texture {
   id: gl::types::GLuint,
@@ -71,7 +72,13 @@ impl Texture {
   pub fn bind(&self, unit: gl::types::GLuint) {
     unsafe {
       gl_call!(gl::ActiveTexture(gl::TEXTURE0 + unit));
-      gl_call!(gl::BindTexture(gl::TEXTURE_2D, self.id));
+      gl_call!(gl::BindTexture(self.r#type, self.id));
+    }
+  }
+
+  pub fn unbind(&self) {
+    unsafe {
+      gl_call!(gl::BindTexture(self.r#type, 0));
     }
   }
 }

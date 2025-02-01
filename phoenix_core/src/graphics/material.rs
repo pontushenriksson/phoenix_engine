@@ -40,6 +40,7 @@ impl Material {
 
   pub fn bind(&self) {
     self.shader.activate();
+    // self.shader.set_uniform_float(&self.ubo.);
     for (index, sampler) in self.samplers.iter().enumerate() {
       sampler.bind(index as u32);
     }

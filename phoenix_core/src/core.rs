@@ -1,6 +1,7 @@
 use std::sync::{Arc, Mutex};
 
-use glfw::{Context, Glfw, WindowEvent};
+use cgmath::Rotation3;
+use glfw::{Context, Glfw};
 use crate::objects::geometry::Ground;
 use crate::Cell;
 
@@ -31,11 +32,23 @@ impl PhoenixEngineInfo {
     }
   }
 
-  pub fn get_vertex_attrib_count(&self) -> i32 {
+  pub fn get_vertex_attrib_count() -> i32 {
+    let mut nr_attributes: i32 = 0;
+    unsafe { gl_call!(gl::GetIntegerv(gl::MAX_VERTEX_ATTRIBS, &mut nr_attributes)); }
+    nr_attributes
+  }
+
+  pub fn get_texture_unit_count() -> i32 {
+    let mut nr_texture_units: i32 = 0;
+    unsafe { gl_call!(gl::GetIntegerv(gl::MAX_TEXTURE_IMAGE_UNITS, &mut nr_texture_units)); }
+    nr_texture_units
+  }
+
+  pub fn vertex_attrib_count(&self) -> i32 {
     self.nr_attributes
   }
 
-  pub fn get_texture_unit_count(&self) -> i32 {
+  pub fn texture_unit_count(&self) -> i32 {
     self.nr_texture_units
   }
 }
@@ -132,15 +145,22 @@ impl PhoenixApplication {
   }
 
   pub fn run(&mut self) {
+    println!("--------------------------------- Running Game ----------------------------------");
+    
     let mut delta_time: f64;
     let mut target_fps = 60.0; // Start with 60 FPS
     let mut frame_time = std::time::Duration::from_secs_f64(1.0 / target_fps);
-    let mut last_frame = std::time::Instant::now();
+
+    let mut theta: f32 = 0.0;
 
     while !self.window.window.lock().unwrap().should_close() {
+      if theta >= 360.0 {
+        theta = 0.0;
+      }
+
+      theta += 0.1;
+
       let now = std::time::Instant::now();
-      delta_time = now.duration_since(last_frame).as_secs_f64();
-      last_frame = now;
 
       // Handle pulled events
       self.window.event_manager.accumulate();
@@ -163,9 +183,9 @@ impl PhoenixApplication {
           object.draw(&camera);
         }
 
-        for _point in &mut self.pointlights {
-          /* point.update_matrix();
-          object.draw(); */
+        for point in &mut self.pointlights {
+          point.update_matrix();
+          point.draw(&camera);
         }
 
         unsafe {
@@ -173,8 +193,9 @@ impl PhoenixApplication {
         }
 
         for ground in &mut self.grounds {
+          ground.set_rotation(cgmath::Quaternion::from_angle_y(cgmath::Deg(theta)));
           ground.update_matrix();
-          ground.draw(&camera);
+          ground.draw(&camera, delta_time as f32);
         }
 
         unsafe {
@@ -204,7 +225,7 @@ impl PhoenixApplication {
         std::thread::sleep(frame_time - elapsed);
       }
 
-      println!("[Runtime] Running at {:.1} fps", target_fps);
+      print!("[Runtime] Running at {:.1} fps\r", target_fps);
     }
   }
 }

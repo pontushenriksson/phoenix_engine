@@ -1,4 +1,4 @@
-#version 460 core
+#version 450 core
 
 layout (location = 0) in vec3 aPos;      // Vertex position
 layout (location = 1) in vec3 aColor;    // Vertex color
@@ -8,13 +8,13 @@ uniform mat4 uModel;                     // Model transformation matrix
 uniform mat4 uView;                      // View transformation matrix
 uniform mat4 uProjection;                // Projection transformation matrix
 uniform sampler2D Texture0;              // Heightmap texture
-// uniform float uHeightScale;              // Scale factor for height displacement
+uniform float uHeightScale = 0.2f;       // Scale factor for height displacement
 
 out vec3 Color;                          // Pass-through color
 out vec2 TexCoord;                       // Pass-through texture coordinates
 
 void main() {
-  float uHeightScale = 0.05f;
+  // float uHeightScale = 0.05f;
   // Sample the heightmap texture to get the height value (assuming grayscale heightmap)
   float height = texture(Texture0, aTexCoord).r; // Use the red channel for height
 
