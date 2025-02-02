@@ -1,56 +1,60 @@
-use futures::Stream;
+use cgmath::SquareMatrix;
 
-use crate::graphics::mesh::{StaticMesh, DynamicMesh, StreamMesh};
-use crate::objects::transform::Transform;
+use crate::{graphics::{camera::Camera, material::Material, mesh::Mesh}, objects::transform::Transform};
 
-// #[derive(Clone)]
-pub struct StaticObject {
-  pub mesh: StaticMesh,
+pub struct GameObject {
+  pub mesh: Mesh<gl::types::GLfloat, gl::types::GLuint>,
+  pub material: Material,
   pub transform: Transform,
+  pub matrix: cgmath::Matrix4<f32>,
 }
 
-impl StaticObject {
+impl GameObject {
   pub fn new(
-    mesh: StaticMesh,
-    transform: Transform,
-  ) -> StaticObject {
-    StaticObject {
+    mesh: Mesh<gl::types::GLfloat, gl::types::GLuint>,
+    material: Material,
+  ) -> GameObject {
+    GameObject {
       mesh,
-      transform
+      material,
+      transform: Transform::identity(),
+      matrix: cgmath::Matrix4::identity()
     }
   }
-}
 
-pub struct DynamicObject {
-  pub mesh: DynamicMesh,
-  pub transform: Transform,
-}
+  pub fn with_transform(mut self, transform: Transform) -> GameObject {
+    self.transform = transform;
 
-impl DynamicObject {
-  pub fn new(
-    mesh: DynamicMesh,
-    transform: Transform,
-  ) -> DynamicObject {
-    DynamicObject {
-      mesh,
-      transform
-    }
+    let translation = cgmath::Matrix4::from_translation(self.transform.translation);
+    let rotation = cgmath::Matrix4::from(self.transform.rotation);
+    let scale = cgmath::Matrix4::from_nonuniform_scale(
+      self.transform.scale.x,
+      self.transform.scale.y,
+      self.transform.scale.z,
+    );
+
+    self.matrix = translation * rotation * scale; // Apply transformations in the correct order
+
+    self
   }
-}
 
-pub struct StreamObject {
-  pub mesh: StreamMesh,
-  pub transform: Transform,
-}
+  pub fn update_matrix(&mut self) {
+    let translation = cgmath::Matrix4::from_translation(self.transform.translation);
+    let rotation = cgmath::Matrix4::from(self.transform.rotation);
+    let scale = cgmath::Matrix4::from_nonuniform_scale(
+      self.transform.scale.x,
+      self.transform.scale.y,
+      self.transform.scale.z,
+    );
 
-impl StreamObject {
-  pub fn new(
-    mesh: StreamMesh,
-    transform: Transform,
-  ) -> StreamObject {
-    StreamObject {
-      mesh,
-      transform
-    }
+    self.matrix = translation * rotation * scale;
+  }
+
+  pub fn draw(&self, camera: &Camera) {
+    self.material.bind();
+    self.material.shader.set_matrix4_f32("uModel", &self.matrix);
+    self.material.shader.set_matrix4_f32("uView", &camera.view);
+    self.material.shader.set_matrix4_f32("uProjection", &camera.projection);
+    self.mesh.draw();
   }
 }

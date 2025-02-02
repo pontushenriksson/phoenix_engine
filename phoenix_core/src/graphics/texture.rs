@@ -1,5 +1,9 @@
 use image::GenericImageView;
 
+use crate::gl_call;
+use crate::debugger::debugger::Debugger;
+
+#[allow(dead_code)]
 #[derive(Debug, Clone)]
 pub struct Texture {
   id: gl::types::GLuint,
@@ -33,17 +37,17 @@ impl Texture {
     // Generate and bind a texture in OpenGL
     let mut texture_id= 0;
     unsafe {
-      gl::GenTextures(1, &mut texture_id);
-      gl::BindTexture(texture_type, texture_id);
+      gl_call!(gl::GenTextures(1, &mut texture_id));
+      gl_call!(gl::BindTexture(texture_type, texture_id));
 
       // Set texture parameters
-      gl::TexParameteri(texture_type, gl::TEXTURE_WRAP_S, gl::REPEAT as i32);
-      gl::TexParameteri(texture_type, gl::TEXTURE_WRAP_T, gl::REPEAT as i32);
-      gl::TexParameteri(texture_type, gl::TEXTURE_MIN_FILTER, gl::LINEAR as i32);
-      gl::TexParameteri(texture_type, gl::TEXTURE_MAG_FILTER, gl::LINEAR as i32);
+      gl_call!(gl::TexParameteri(texture_type, gl::TEXTURE_WRAP_S, gl::REPEAT as i32));
+      gl_call!(gl::TexParameteri(texture_type, gl::TEXTURE_WRAP_T, gl::REPEAT as i32));
+      gl_call!(gl::TexParameteri(texture_type, gl::TEXTURE_MIN_FILTER, gl::LINEAR as i32));
+      gl_call!(gl::TexParameteri(texture_type, gl::TEXTURE_MAG_FILTER, gl::LINEAR as i32));
 
       // Upload flipped texture data to OpenGL
-      gl::TexImage2D(
+      gl_call!(gl::TexImage2D(
         texture_type,
           0,
           format as i32,
@@ -53,9 +57,10 @@ impl Texture {
           format,
           pixel_type,
           flipped_data.as_ptr() as *const std::ffi::c_void,
-      );
+      ));
       
-      gl::GenerateMipmap(texture_type); // Generate mipmaps
+      gl_call!(gl::GenerateMipmap(texture_type)); // Generate mipmaps
+      gl_call!(gl::BindTexture(texture_type, 0));
     }
 
     Texture {
@@ -66,8 +71,14 @@ impl Texture {
 
   pub fn bind(&self, unit: gl::types::GLuint) {
     unsafe {
-        gl::ActiveTexture(gl::TEXTURE0 + unit);
-        gl::BindTexture(gl::TEXTURE_2D, self.id);
+      gl_call!(gl::ActiveTexture(gl::TEXTURE0 + unit));
+      gl_call!(gl::BindTexture(self.r#type, self.id));
+    }
+  }
+
+  pub fn unbind(&self) {
+    unsafe {
+      gl_call!(gl::BindTexture(self.r#type, 0));
     }
   }
 }
@@ -78,15 +89,17 @@ pub struct Diffuse;
 #[derive(Debug, Clone)]
 pub struct Specular;
 
+#[derive(Debug, Clone)]
+pub struct Topography;
+
 pub trait Sampler {
   fn new(
     file_path: &str,
-    unit: gl::types::GLuint,
     format: gl::types::GLenum,
     pixel_image: gl::types::GLenum
-  ) -> Self where Self: Sized;
+  ) -> Box<Self> where Self: Sized;
 
-  fn bind(&self);
+  fn bind(&self, unit: gl::types::GLuint);
 
   fn unbind(&self);
 }
@@ -94,66 +107,64 @@ pub trait Sampler {
 #[derive(Debug, Clone)]
 pub struct Sampler2D<T> {
   texture: Texture,
-  unit: gl::types::GLuint,
   _marker: std::marker::PhantomData<T>,
 }
 
 impl<T> Sampler for Sampler2D<T> {
   fn new(
     file_path: &str,
-    unit: gl::types::GLuint,
     format: gl::types::GLenum,
     pixel_type: gl::types::GLenum,
-  ) -> Sampler2D<T> {
+  ) -> Box<Sampler2D<T>> {
     let texture = Texture::new(file_path, gl::TEXTURE_2D, format, pixel_type);
-    Sampler2D {
-      texture,
-      unit,
-      _marker: std::marker::PhantomData
-    }
+    Box::new(
+      Sampler2D {
+        texture,
+        _marker: std::marker::PhantomData
+      }
+    )
   }
 
-  fn bind(&self) {
-    self.texture.bind(self.unit);
+  fn bind(&self, unit: gl::types::GLuint) {
+    self.texture.bind(unit);
   }
 
   fn unbind(&self) {
     unsafe {
-      gl::ActiveTexture(gl::TEXTURE0);
-      gl::BindTexture(gl::TEXTURE_2D, 0);
+      gl_call!(gl::ActiveTexture(gl::TEXTURE0));
+      gl_call!(gl::BindTexture(gl::TEXTURE_2D, 0));
     }
   }
 }
 
 pub struct Sampler3D<T> {
   texture: Texture,
-  unit: gl::types::GLuint,
   _marker: std::marker::PhantomData<T>
 }
 
 impl<T> Sampler for Sampler3D<T> {
   fn new(
     file_path: &str,
-    unit: gl::types::GLuint,
     format: gl::types::GLenum,
     pixel_type: gl::types::GLenum,
-  ) -> Sampler3D<T> {
+  ) -> Box<Sampler3D<T>> {
     let texture = Texture::new(file_path, gl::TEXTURE_3D, format, pixel_type);
-    Sampler3D {
-      texture,
-      unit,
-      _marker: std::marker::PhantomData
-    }
+    Box::new(
+      Sampler3D {
+        texture,
+        _marker: std::marker::PhantomData
+      }
+    )
   }
 
-  fn bind(&self) {
-    self.texture.bind(self.unit);
+  fn bind(&self, unit: gl::types::GLuint) {
+    self.texture.bind(unit);
   }
 
   fn unbind(&self) {
     unsafe {
-      gl::ActiveTexture(gl::TEXTURE0);
-      gl::BindTexture(gl::TEXTURE_3D, 0);
+      gl_call!(gl::ActiveTexture(gl::TEXTURE0));
+      gl_call!(gl::BindTexture(gl::TEXTURE_3D, 0));
     }
   }
 }

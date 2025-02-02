@@ -1,11 +1,16 @@
+use crate::gl_call;
+use crate::debugger::debugger::Debugger;
+
 use std::sync::{Arc, Mutex};
-use glfw::{Context, Glfw, PWindow};
+use glfw::{Context, Glfw, PWindow, WindowEvent};
 use image::{self, GenericImageView};
+
+use crate::{events::events::EventManager};
 
 pub struct Window {
   pub glfw: Arc<Mutex<Glfw>>,
   pub window: Arc<Mutex<PWindow>>,
-  // pub events_manager: EventManager,
+  pub event_manager: EventManager,
   pub width: u32,
   pub height: u32,
 }
@@ -15,7 +20,7 @@ impl Window {
     width: u32,
     height: u32,
     title: &str,
-    icon: &str
+    icon: &str,
   ) -> Window {
     println!("------------------------------------ Window -------------------------------------");
     println!("Initializing glfw ...");
@@ -79,26 +84,32 @@ impl Window {
     // let event_manager = EventManager::new(glfw.clone(), window.clone(), receiver);
   
     unsafe {
-      gl::Enable(gl::BLEND);
-      gl::BlendFunc(gl::SRC_ALPHA, gl::ONE_MINUS_SRC_ALPHA);
-      gl::Enable(gl::DEPTH_TEST);
+      gl_call!(gl::Enable(gl::BLEND));
+      gl_call!(gl::BlendFunc(gl::SRC_ALPHA, gl::ONE_MINUS_SRC_ALPHA));
+      gl_call!(gl::Enable(gl::DEPTH_TEST));
 
       // Face Culling (Optimization)
-      gl::Enable(gl::CULL_FACE);
-      gl::CullFace(gl::FRONT);
-      gl::FrontFace(gl::CCW);
+      gl_call!(gl::Enable(gl::CULL_FACE));
+      gl_call!(gl::CullFace(gl::FRONT));
+      gl_call!(gl::FrontFace(gl::CCW));
       
       // Set clearing color
-      gl::ClearColor(0.0, 0.0, 0.0, 1.0);
-      gl::PolygonMode(gl::FRONT_AND_BACK, gl::FILL);
+      gl_call!(gl::ClearColor(0.0, 0.0, 0.0, 1.0));
+      gl_call!(gl::PolygonMode(gl::FRONT_AND_BACK, gl::FILL));
     }
+
+    let event_manager = EventManager::new(
+      glfw.clone(),
+      window.clone(),
+      receiver,
+    );
 
     println!("Created Window");
 
     Window {
       glfw,
       window,
-      // event_manager,
+      event_manager,
       width,
       height,
     }

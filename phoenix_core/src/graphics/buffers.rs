@@ -1,3 +1,6 @@
+use crate::gl_call;
+use crate::debugger::debugger::Debugger;
+
 pub struct UniformBufferObject {
   id: gl::types::GLuint,
   size: gl::types::GLintptr,
@@ -7,8 +10,8 @@ impl UniformBufferObject {
   pub fn new(size: gl::types::GLintptr) -> UniformBufferObject {
     let mut id = 0;
     unsafe {
-      gl::CreateBuffers(1, &mut id);
-      gl::NamedBufferData(id, size, std::ptr::null(), gl::STATIC_DRAW);
+      gl_call!(gl::CreateBuffers(1, &mut id));
+      gl_call!(gl::NamedBufferData(id, size, std::ptr::null(), gl::STATIC_DRAW));
     }
 
     UniformBufferObject { id, size }
@@ -23,30 +26,30 @@ impl UniformBufferObject {
     );
 
     unsafe {
-      gl::NamedBufferSubData(
+      gl_call!(gl::NamedBufferSubData(
         self.id,
         offset,
         data_size,
         data.as_ptr() as *const std::ffi::c_void,
-      );
+      ));
     }
   }
 
   pub fn bind_to(&self, binding_point: gl::types::GLuint) {
     unsafe {
-      gl::BindBufferBase(gl::UNIFORM_BUFFER, binding_point, self.id);
+      gl_call!(gl::BindBufferBase(gl::UNIFORM_BUFFER, binding_point, self.id));
     }
   }
 
   pub fn unbind_from(binding_point: gl::types::GLuint) {
     unsafe {
-      gl::BindBufferBase(gl::UNIFORM_BUFFER, binding_point, 0);
+      gl_call!(gl::BindBufferBase(gl::UNIFORM_BUFFER, binding_point, 0));
     }
   }
 
   pub fn delete(self) {
     unsafe {
-      gl::DeleteBuffers(1, &self.id);
+      gl_call!(gl::DeleteBuffers(1, &self.id));
     }
   }
 }
@@ -60,8 +63,8 @@ impl InstanceBufferObject {
   pub fn new(size: gl::types::GLintptr) -> InstanceBufferObject {
     let mut id = 0;
     unsafe {
-      gl::CreateBuffers(1, &mut id);
-      gl::NamedBufferData(id, size, std::ptr::null(), gl::DYNAMIC_DRAW);
+      gl_call!(gl::CreateBuffers(1, &mut id));
+      gl_call!(gl::NamedBufferData(id, size, std::ptr::null(), gl::DYNAMIC_DRAW));
     }
 
     InstanceBufferObject { id, size }
@@ -76,30 +79,30 @@ impl InstanceBufferObject {
     );
 
     unsafe {
-      gl::NamedBufferSubData(
+      gl_call!(gl::NamedBufferSubData(
         self.id,
         offset,
         data_size,
         data.as_ptr() as *const std::ffi::c_void,
-      );
+      ));
     }
   }
 
   pub fn bind(&self) {
     unsafe {
-      gl::BindBuffer(gl::ARRAY_BUFFER, self.id);
+      gl_call!(gl::BindBuffer(gl::ARRAY_BUFFER, self.id));
     }
   }
 
   pub fn unbind() {
     unsafe {
-      gl::BindBuffer(gl::ARRAY_BUFFER, 0);
+      gl_call!(gl::BindBuffer(gl::ARRAY_BUFFER, 0));
     }
   }
 
   pub fn delete(self) {
     unsafe {
-      gl::DeleteBuffers(1, &self.id);
+      gl_call!(gl::DeleteBuffers(1, &self.id));
     }
   }
 }
