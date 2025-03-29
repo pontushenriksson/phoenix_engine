@@ -1,200 +1,92 @@
-fn check_gl_error(place: &str) {
-  unsafe {
-    let error = gl::GetError();
-    if error != gl::NO_ERROR {
-      println!("OpenGL error at {} : {:?}", place, error);
-    }
+use gl;
+use cgmath;
+
+use crate::gl_call;
+use crate::debugger::debugger::Debugger;
+
+pub trait RenderDataPrimitive: 'static + Copy {
+  fn to_i32_vec(vector: &[Self]) -> Vec<i32> {
+    panic!("Not implemented for this type!");
+  }
+
+  fn to_u32_vec(vector: &[Self]) -> Vec<u32> {
+    panic!("Not implemented for this type!");
+  }
+
+  fn to_f32_vec(vector: &[Self]) -> Vec<f32> {
+    panic!("Not implemented for this type!");
   }
 }
 
-#[derive(Debug)]
-pub struct VertexAttributeDescriptor {
-  pub location: gl::types::GLuint, // Shader Location
-  pub size: gl::types::GLint, // Components per attribute (e.g 3 for vec3)
-  pub data_type: gl::types::GLenum, // Data type (e.g gl::FLOAT)
-  pub normalized: gl::types::GLboolean,
-  pub stride: gl::types::GLsizei,
-  pub offset: usize, // Offset within stride
+impl RenderDataPrimitive for i32 {
+  fn to_i32_vec(vector: &[Self]) -> Vec<i32> {
+    vector.to_vec()
+  }
+}
+
+impl RenderDataPrimitive for u32 {
+  fn to_u32_vec(vector: &[Self]) -> Vec<u32> {
+    vector.to_vec()
+  }
+}
+
+impl RenderDataPrimitive for f32 {
+  fn to_f32_vec(vector: &[Self]) -> Vec<f32> {
+    vector.to_vec()
+  }
 }
 
 #[derive(Debug)]
 pub struct VertexBufferObject {
-  id: gl::types::GLuint,     // id
-  target: gl::types::GLenum, // target type, e.g gl::ARRAY_BUFFER
-  usage: gl::types::GLenum,  // usage/draw call, e.g gl::STATIC_DRAW
+  id: gl::types::GLuint,
+  usage: gl::types::GLenum,
 }
 
 impl VertexBufferObject {
-  pub fn new(
-    target: gl::types::GLenum,
-    usage: gl::types::GLenum
-  ) -> VertexBufferObject {
-    let mut id: gl::types::GLuint = 0;
+  pub fn new(usage: gl::types::GLenum) -> VertexBufferObject {
+    let mut id = 0;
     unsafe {
-      // Depends on OpenGL version either Gen or Create
-      gl::CreateBuffers(1, &mut id);
-      // TODO: Debug
-      check_gl_error("gl::CreateBuffers(1, &mut id)");
+      gl_call!(gl::CreateBuffers(1, &mut id));
     }
 
-    VertexBufferObject { id, target, usage}
+    VertexBufferObject { id, usage }
+  }
+
+  pub fn generate(usage: gl::types::GLenum) -> VertexBufferObject {
+    let mut id = 0;
+    unsafe {
+      gl_call!(gl::GenBuffers(1, &mut id));
+    }
+
+    VertexBufferObject { id, usage }
+  }
+
+  pub fn store(&self, data: &[gl::types::GLfloat]) {
+    unsafe {
+      gl_call!(gl::BufferData(
+        gl::ARRAY_BUFFER,
+        (data.len() * std::mem::size_of::<gl::types::GLfloat>()) as gl::types::GLsizeiptr,
+        &data[0] as *const gl::types::GLfloat as *const std::ffi::c_void,
+        self.usage
+      ));
+    }
   }
 
   pub fn bind(&self) {
     unsafe {
-      gl::BindBuffer(self.target, self.id);
-    }
-  }
-
-  pub fn unbind(&self) {
-    unsafe {
-      gl::BindBuffer(self.target, 0);
-    }
-  }
-
-  pub fn store_data<T>(&self, data: &[T]) {
-    unsafe {
-      // gl::BindBuffer(self.target, self.id);
-      gl::BufferData(
-        self.target,
-        (data.len() * std::mem::size_of::<T>()) as gl::types::GLsizeiptr,
-        data.as_ptr() as *const std::ffi::c_void,
-        self.usage,
-      );
-      // gl::BindBuffer(self.target, 0);
-    }
-  }
-}
-
-impl Drop for VertexBufferObject {
-  fn drop(&mut self) {
-    unsafe {
-      gl::DeleteBuffers(1, &self.id);
-    }
-  }
-}
-
-#[derive(Debug)]
-pub struct VertexAttribute {
-  location: gl::types::GLuint, // location in layout in shader
-}
-
-impl VertexAttribute {
-  pub fn new(
-    location: gl::types::GLuint,
-    size: gl::types::GLint,
-    type_of_data: gl::types::GLenum, // a vec* (vec type) in GLSL consists of floating point values so this should be gl::FLOAT
-    normalized: gl::types::GLboolean,
-    /*
-    
-    If we're inputting integer data types (int, byte) and we've set this to GL_TRUE,
-    the integer data is normalized to 0 (or -1 for signed data) and 1 when converted to float. 
-    This is not relevant for us so we'll leave this at gl::FALSE.
-    
-    */
-    stride: gl::types::GLsizei,
-    pointer: *const std::ffi::c_void      // The offset of where the position data begins in the buffer. If the position data is at the start of the data array this value is just 0
-  ) -> VertexAttribute {
-    unsafe {
-      gl::EnableVertexAttribArray(location);
-      gl::VertexAttribPointer(location, size, type_of_data, normalized, stride, pointer);
-    }
-
-    VertexAttribute { location }
-  }
-
-  pub fn from(descriptor: &VertexAttributeDescriptor) -> VertexAttribute {
-    VertexAttribute::new(
-      descriptor.location,
-      descriptor.size,
-      descriptor.data_type,
-      descriptor.normalized,
-      descriptor.stride,
-      (descriptor.offset * std::mem::size_of::<f32>()) as *const std::ffi::c_void
-    )
-  }
-
-  pub fn enable(&self) {
-    unsafe {
-      gl::EnableVertexAttribArray(self.location);
-    }
-  }
-
-  pub fn disable(&self) {
-    unsafe {
-      gl::DisableVertexAttribArray(self.location);
-    }
-  }
-}
-
-#[derive(Debug)]
-pub struct VertexArrayObject {
-  id: gl::types::GLuint,
-}
-
-impl VertexArrayObject {
-  pub fn new() -> VertexArrayObject {
-    let mut id: gl::types::GLuint = 0;
-    unsafe {
-      // Depends on OpenGL version either Gen or Create
-      gl::CreateVertexArrays(1, &mut id);
-      // TODO: Debug
-      check_gl_error("gl::CreateVertexArrays(1, &mut id)");
-    }
-
-    VertexArrayObject { id }
-  }
-
-  pub fn link_vbo(
-    &self,
-    vbo: &VertexBufferObject,
-    attributes: &[VertexAttributeDescriptor],
-    stride: gl::types::GLsizei
-  ) {
-    vbo.bind();
-    for attribute in attributes {
-      unsafe {
-        gl::VertexAttribPointer(
-          attribute.location,
-          attribute.size,
-          attribute.data_type,
-          attribute.normalized,
-          stride,
-          attribute.offset as *const std::ffi::c_void
-        );
-      }
-    }
-    vbo.unbind();
-  }
-
-  pub fn link_separate_vbo(
-    &self,
-    vbo: &VertexBufferObject,
-    descriptor: &VertexAttributeDescriptor
-  ) {
-    vbo.bind();
-    unsafe {
-      gl::VertexAttribPointer(
-        descriptor.location,
-        descriptor.size,
-        descriptor.data_type,
-        descriptor.normalized,
-        0, // No stride since the data is non-interleaved
-        descriptor.offset as *const std::ffi::c_void
-      );
-    }
-    vbo.unbind();
-  }
-
-  pub fn bind(&self) {
-    unsafe {
-      gl::BindVertexArray(self.id);
+      gl_call!(gl::BindBuffer(gl::ARRAY_BUFFER, self.id));
     }
   }
 
   pub fn unbind() {
     unsafe {
-      gl::BindVertexArray(0);
+      gl_call!(gl::BindBuffer(gl::ARRAY_BUFFER, 0));
+    }
+  }
+
+  pub fn delete(&mut self) {
+    unsafe {
+      gl_call!(gl::DeleteBuffers(1, &self.id));
     }
   }
 }
@@ -202,53 +94,223 @@ impl VertexArrayObject {
 #[derive(Debug)]
 pub struct ElementBufferObject {
   id: gl::types::GLuint,
-  target: gl::types::GLenum,
   usage: gl::types::GLenum,
 }
 
 impl ElementBufferObject {
-  pub fn new(target: gl::types::GLenum, usage: gl::types::GLenum) -> ElementBufferObject {
+  pub fn new(usage: gl::types::GLenum) -> ElementBufferObject {
     let mut id = 0;
     unsafe {
-      // Depends on OpenGL version either Gen or Create
-      gl::CreateBuffers(1, &mut id);
-      // TODO: Debug
-      check_gl_error("gl::CreateBuffers(1, &mut id)");
+      gl_call!(gl::CreateBuffers(1, &mut id));
     }
 
-    ElementBufferObject { id, target, usage }
+    ElementBufferObject { id, usage }
+  }
+
+  pub fn generate(usage: gl::types::GLenum) -> ElementBufferObject {
+    let mut id = 0;
+    unsafe {
+      gl_call!(gl::GenBuffers(1, &mut id));
+    }
+
+    ElementBufferObject { id, usage }
+  }
+
+  pub fn store(&self, data: &[gl::types::GLuint]) {
+    unsafe {
+      gl_call!(gl::BufferData(
+        gl::ELEMENT_ARRAY_BUFFER,
+        (data.len() * std::mem::size_of::<gl::types::GLuint>()) as gl::types::GLsizeiptr,
+        &data[0] as *const gl::types::GLuint as *const std::ffi::c_void,
+        self.usage
+      ));
+    }
   }
 
   pub fn bind(&self) {
     unsafe {
-      gl::BindBuffer(self.target, self.id);
+      gl_call!(gl::BindBuffer(gl::ELEMENT_ARRAY_BUFFER, self.id));
     }
   }
 
-  pub fn unbind(&self) {
+  pub fn unbind() {
     unsafe {
-      gl::BindBuffer(self.target, 0);
+      gl_call!(gl::BindBuffer(gl::ELEMENT_ARRAY_BUFFER, 0));
     }
   }
 
-  pub fn store_data(&mut self, data: &[gl::types::GLuint]) {
+  pub fn delete(&mut self) {
     unsafe {
-      // gl::BindBuffer(self.target, self.id);
-      gl::BufferData(
-        self.target,
-        (data.len() * std::mem::size_of::<gl::types::GLuint>()) as isize,
-        &data[0] as *const u32 as *const std::ffi::c_void,
-        self.usage,
-      );
-      // gl::BindBuffer(self.target, 0);
+      gl_call!(gl::DeleteBuffers(1, &self.id));
     }
   }
 }
 
-pub struct RenderData {
-  pub vao: VertexArrayObject,
-  pub vbo: VertexBufferObject,
-  pub ebo: Option<ElementBufferObject>,
-  // vapds: Vec<VertexAttributeDescriptor>,
-  // vaps: Vec<VertexAttribute>,
+#[derive(Debug, Clone)]
+pub enum Attribute {
+  Float,
+  Vec2,
+  Vec3,
+  Vec4,
+  Int,
+  IVec2,
+  IVec3,
+  IVec4
+}
+
+impl Attribute {
+  pub fn size(&self) -> gl::types::GLsizei {
+    match self {
+      Attribute::Float | Attribute::Int => 1,
+      Attribute::Vec2  | Attribute::IVec2 => 2,
+      Attribute::Vec3  | Attribute::IVec3 => 3,
+      Attribute::Vec4  | Attribute::IVec4 => 4,
+    }
+  }
+
+  pub fn gl_type(&self) -> gl::types::GLenum {
+    match self {
+      Attribute::Float | Attribute::Vec2  | Attribute::Vec3  | Attribute::Vec4 => gl::FLOAT,
+      Attribute::Int   | Attribute::IVec2 | Attribute::IVec3 | Attribute::IVec4 => gl::INT,
+    }
+  }
+
+  pub fn normalized(&self) -> gl::types::GLboolean {
+    match self {
+      Attribute::Float | Attribute::Vec2 | Attribute::Vec3 | Attribute::Vec4 => gl::FALSE,
+      _ => gl::FALSE, // Integers are not normalized
+    }
+  }
+}
+
+pub struct AttributeBuilder {
+  attributes: Vec<Attribute>,
+  stride: i32,
+}
+
+impl AttributeBuilder {
+  pub fn new() -> AttributeBuilder {
+    AttributeBuilder {
+      attributes: Vec::new(),
+      stride: 0,
+    }
+  }
+
+  pub fn add(mut self, attribute: Attribute) -> Self {
+    self.stride += attribute.size() * std::mem::size_of::<gl::types::GLfloat>() as i32;
+    self.attributes.push(attribute);
+    self
+  }
+
+  pub fn enable(&self) {
+    let mut offset = 0;
+    for (index, attribute) in self.attributes.iter().enumerate() {
+      unsafe {
+        gl_call!(gl::EnableVertexAttribArray(index as u32));
+        gl_call!(gl::VertexAttribPointer(
+          index as u32,
+          attribute.size(),
+          attribute.gl_type(),
+          attribute.normalized(),
+          self.stride,
+          offset as *const std::ffi::c_void,
+        ));
+      }
+
+      offset += attribute.size() * std::mem::size_of::<gl::types::GLfloat>() as i32;
+    }
+  }
+}
+
+pub struct VertexDescriptor {
+  pub attributes: Vec<Attribute>,
+  pub stride: i32,
+}
+
+#[derive(Debug)]
+pub struct VertexArrayObject(gl::types::GLuint);
+
+impl VertexArrayObject {
+  pub fn new() -> VertexArrayObject {
+    let mut id: u32 = 0;
+    unsafe {
+      gl_call!(gl::CreateVertexArrays(1, &mut id));
+    }
+
+    VertexArrayObject(id)
+  }
+
+  pub fn from(
+    usage: gl::types::GLenum,
+    vertices: &[gl::types::GLfloat],
+    indices: &[gl::types::GLuint],
+    descriptor: VertexDescriptor,
+  ) -> VertexArrayObject {
+    let mut id: u32 = 0;
+    let mut buffers: [u32; 2] = [ 0, 0 ];
+    unsafe {
+      gl_call!(gl::CreateVertexArrays(1, &mut id));
+
+      gl_call!(gl::BindVertexArray(id));
+      gl_call!(gl::CreateBuffers(2, &mut buffers[0]));
+      gl_call!(gl::BindBuffer(gl::ARRAY_BUFFER, buffers[0]));
+      gl_call!(gl::BufferData(
+        gl::ARRAY_BUFFER,
+        (vertices.len() * std::mem::size_of::<gl::types::GLfloat>()) as gl::types::GLsizeiptr,
+        &vertices[0] as *const f32 as *const std::ffi::c_void,
+        usage
+      ));
+      gl_call!(gl::BindBuffer(gl::ELEMENT_ARRAY_BUFFER, buffers[1]));
+      gl_call!(gl::BufferData(
+        gl::ELEMENT_ARRAY_BUFFER,
+        (indices.len() * std::mem::size_of::<gl::types::GLfloat>()) as gl::types::GLsizeiptr,
+        &indices[0] as *const u32 as *const std::ffi::c_void, 
+        usage
+      ));
+    }
+
+    let stride: gl::types::GLsizei = descriptor.attributes.iter().map(|a| a.size()).sum::<i32>() * std::mem::size_of::<gl::types::GLfloat>() as gl::types::GLsizei;
+
+    let mut offset = 0;
+    for (index, attribute) in descriptor.attributes.iter().enumerate() {
+      unsafe {
+        gl_call!(gl::EnableVertexAttribArray(index as u32));
+        gl_call!(gl::VertexAttribPointer(
+          index as u32,
+          attribute.size(),
+          attribute.gl_type(),
+          attribute.normalized(),
+          stride,
+          offset as *const std::ffi::c_void,
+        ));
+      }
+      offset += attribute.size() * std::mem::size_of::<gl::types::GLfloat>() as i32;
+    }
+
+    unsafe {
+      gl_call!(gl::BindVertexArray(0));
+      gl_call!(gl::BindBuffer(gl::ARRAY_BUFFER, 0));
+      gl_call!(gl::BindBuffer(gl::ELEMENT_ARRAY_BUFFER, 0));
+    }
+    
+    VertexArrayObject(id)
+  }
+
+  pub fn bind(&self) {
+    unsafe {
+      gl_call!(gl::BindVertexArray(self.0));
+    }
+  }
+
+  pub fn unbind() {
+    unsafe {
+      gl_call!(gl::BindVertexArray(0));
+    }
+  }
+
+  pub fn delete(&mut self) {
+    unsafe {
+      gl_call!(gl::DeleteVertexArrays(1, &self.0));
+    }
+  }
 }

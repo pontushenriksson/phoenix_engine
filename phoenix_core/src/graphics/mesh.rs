@@ -1,234 +1,117 @@
-use std::collections::HashMap;
+use crate::gl_call;
+use crate::debugger::debugger::Debugger;
 
-use crate::assets::loader::RawVertexData;
-use crate::graphics::data::RenderData;
-use crate::graphics::shader::ShaderProgram;
+use crate::graphics::data::RenderDataPrimitive;
+use crate::graphics::data::{ElementBufferObject, VertexArrayObject, VertexBufferObject};
+use super::data::VertexDescriptor;
 
-use crate::graphics::data::{
-  VertexArrayObject,
-  VertexBufferObject,
-  ElementBufferObject,
-  VertexAttributeDescriptor,
-  VertexAttribute
-};
-
-pub enum MaterialType {
-  Basic,  // Simple unlit material,
-  Pbr,    // Physically-Based Rendering
-  Custom, // Custom shaders provided by the user
+pub enum BufferType {
+  Static,
+  Dynamic,
+  Stream,
 }
 
-pub struct UniformMatrices {
-  pub model: cgmath::Matrix4<f32>,
-  pub view: cgmath::Matrix4<f32>,
-  pub projection: cgmath::Matrix4<f32>
-}
-
-pub enum UniformValue {
-  Float(f32),
-  Vec3(cgmath::Vector3<f32>),
-  Mat4(cgmath::Matrix4<f32>),
-  // Texture(Texture),
-}
-
-pub struct  UniformCollection {
-  pub matrices: UniformMatrices,
-  pub other: HashMap<String, UniformValue>,
-}
-
-pub struct Material {
-  pub r#type: MaterialType,
-  pub shader: ShaderProgram,
-  pub uniforms: UniformCollection,
-}
-
-pub struct StaticMesh {
-  pub vertices: RawVertexData,
-  pub indices: Option<Vec<u32>>,
-  pub render_data: RenderData,
-}
-
-// Maybe turn Mesh into a trait later which StaticMesh and DynamicMesh implement?
-
-impl StaticMesh {
-  pub fn new(
-    vertices: RawVertexData,
-    indices: Option<Vec<u32>>,
-  ) -> Box<StaticMesh> {
-    // Step 1: Create RenderData
-    let vao = VertexArrayObject::new();
-    let vbo = VertexBufferObject::new(gl::ARRAY_BUFFER, gl::STATIC_DRAW);
-    let mut ebo = indices.as_ref().map(|_| ElementBufferObject::new(gl::ELEMENT_ARRAY_BUFFER, gl::STATIC_DRAW));
-
-    vao.bind();
-    vbo.bind();
-
-    // Store vertex data into VBO
-    vbo.store_data(&vertices.data); // Assuming positions in RawVertexData
-
-    // Store indices in EBO (if present)
-    if let Some(ref indices_data) = indices {
-      if let Some(ref mut ebo_obj) = ebo {
-        ebo_obj.bind();
-        ebo_obj.store_data(&indices_data);
-      }
+impl BufferType {
+  pub fn as_gl(&self) -> gl::types::GLenum {
+    match self {
+      BufferType::Static => gl::STATIC_DRAW,
+      BufferType::Dynamic => gl::DYNAMIC_DRAW,
+      BufferType::Stream => gl::STREAM_DRAW,
     }
-
-    // Define vertex attribute pointers (Position, TexCoord, Normals, etc.)
-    // Assumes positions and texcoords in interleaved layout
-    let stride = (vertices.stride * std::mem::size_of::<f32>()) as gl::types::GLsizei;
-
-    let position_attribute = VertexAttributeDescriptor {
-      location: 0, // Location in the shader
-      size: 3,     // x, y, z
-      data_type: gl::FLOAT,
-      normalized: gl::FALSE,
-      stride,
-      offset: 0,
-    };
-
-    let normal_attribute = VertexAttributeDescriptor {
-      location: 1,
-      size: 3,
-      data_type: gl::FLOAT,
-      normalized: gl::FALSE,
-      stride,
-      offset: 3
-    };
-
-    let color_attribute = VertexAttributeDescriptor {
-      location: 2,
-      size: 3,
-      data_type: gl::FLOAT,
-      normalized: gl::FALSE,
-      stride,
-      offset: 6
-    };
-
-    // Enable and set up attributes
-    let vap_pos = VertexAttribute::from(&position_attribute);
-    vap_pos.enable();
-
-    let vap_norm = VertexAttribute::from(&normal_attribute);
-    vap_norm.enable();
-
-    let vap_col = VertexAttribute::from(&color_attribute);
-    vap_col.enable();
-
-    VertexArrayObject::unbind();
-    vbo.unbind();
-    if let Some(ref ebo_obj) = ebo {
-      ebo_obj.unbind();
-    }
-
-    // Prepare the RenderData (VAO, VBO, EBO)
-    let render_data = RenderData {
-      vao,
-      vbo,
-      ebo,
-    };
-
-    // Return Mesh with data
-    Box::new(
-      StaticMesh {
-        vertices,
-        indices,
-        render_data,
-      }
-    )
   }
 }
 
-pub struct DynamicMesh {
-  pub vertices: RawVertexData,
-  pub indices: Option<Vec<u32>>,
-  pub render_data: RenderData,
+pub struct Mesh<T: RenderDataPrimitive, U: RenderDataPrimitive> {
+  // Render data
+  vao: VertexArrayObject,
+  vbo: VertexBufferObject,
+  ebo: Option<ElementBufferObject>,
+  descriptor: VertexDescriptor,
+
+  // Raw data
+  vertices: Vec<T>,
+  indices: Option<Vec<U>>,
 }
 
-impl DynamicMesh {
+impl<T, U> Mesh<T, U>
+where T: RenderDataPrimitive, U: RenderDataPrimitive {
   pub fn new(
-    vertices: RawVertexData,
-    indices: Option<Vec<u32>>
-  ) -> Box<DynamicMesh> {
-    // Step 1: Create RenderData
+    usage: BufferType,
+    vertices: Vec<T>,
+    indices: Option<Vec<U>>,
+    descriptor: VertexDescriptor,
+  ) -> Mesh<T, U> {
     let vao = VertexArrayObject::new();
-    let vbo = VertexBufferObject::new(gl::ARRAY_BUFFER, gl::DYNAMIC_DRAW);
-    let mut ebo = indices.as_ref().map(|_| ElementBufferObject::new(gl::ELEMENT_ARRAY_BUFFER, gl::DYNAMIC_DRAW));
-
     vao.bind();
+
+    let vbo = VertexBufferObject::new(usage.as_gl());
     vbo.bind();
+    vbo.store(&T::to_f32_vec(&vertices));
 
-    // Store vertex data into VBO
-    vbo.store_data(&vertices.data); // Assuming positions in RawVertexData
+    let mut ebo: Option<ElementBufferObject> = None;
 
-    // Store indices in EBO (if present)
-    if let Some(ref indices_data) = indices {
-      if let Some(ref mut ebo_obj) = ebo {
-        ebo_obj.bind();
-        ebo_obj.store_data(&indices_data);
-      }
+    if let Some(ref indices_vec) = indices {
+      let element_buffer = ElementBufferObject::new(usage.as_gl());
+      element_buffer.bind();
+      element_buffer.store(&U::to_u32_vec(indices_vec)); // Borrow instead of move
+      element_buffer.bind();
+      ebo = Some(element_buffer);
     }
 
-    // Define vertex attribute pointers (Position, TexCoord, Normals, etc.)
-    // Assumes positions and texcoords in interleaved layout
-    let stride = (vertices.stride * std::mem::size_of::<f32>()) as gl::types::GLsizei;
+    let mut offset = 0;
+    for (index, attribute) in descriptor.attributes.iter().enumerate() {
+      unsafe {
+        gl_call!(gl::EnableVertexAttribArray(index as u32));
+        gl_call!(gl::VertexAttribPointer(
+          index as u32,
+          attribute.size(),
+          attribute.gl_type(),
+          attribute.normalized(),
+          descriptor.stride * std::mem::size_of::<T>() as gl::types::GLsizei,
+          offset as *const std::ffi::c_void,
+        ));
+      }
 
-    let position_attribute = VertexAttributeDescriptor {
-      location: 0, // Location in the shader
-      size: 3,     // x, y, z
-      data_type: gl::FLOAT,
-      normalized: gl::FALSE,
-      stride,
-      offset: 0,
-    };
-
-    let normal_attribute = VertexAttributeDescriptor {
-      location: 1,
-      size: 3,
-      data_type: gl::FLOAT,
-      normalized: gl::FALSE,
-      stride,
-      offset: 3
-    };
-
-    let color_attribute = VertexAttributeDescriptor {
-      location: 2,
-      size: 3,
-      data_type: gl::FLOAT,
-      normalized: gl::FALSE,
-      stride,
-      offset: 6
-    };
-
-    // Enable and set up attributes
-    let vap_pos = VertexAttribute::from(&position_attribute);
-    vap_pos.enable();
-
-    let vap_norm = VertexAttribute::from(&normal_attribute);
-    vap_norm.enable();
-
-    let vap_col = VertexAttribute::from(&color_attribute);
-    vap_col.enable();
+      offset += attribute.size() * std::mem::size_of::<gl::types::GLfloat>() as i32;
+    }
 
     VertexArrayObject::unbind();
-    vbo.unbind();
-    if let Some(ref ebo_obj) = ebo {
-      ebo_obj.unbind();
-    }
+    VertexBufferObject::unbind();
+    ElementBufferObject::unbind();
 
-    // Prepare the RenderData (VAO, VBO, EBO)
-    let render_data = RenderData {
+    Mesh {
       vao,
       vbo,
       ebo,
-    };
+      descriptor,
+      vertices,
+      indices,
+    }
+  }
 
-    Box::new(
-      DynamicMesh {
-        vertices,
-        indices,
-        render_data,
+  pub fn draw(&self) {
+    self.vao.bind();
+    if let Some(indices) = &self.indices {
+      unsafe {
+        gl_call!(gl::DrawElements(gl::TRIANGLES, indices.len() as i32, gl::UNSIGNED_INT, std::ptr::null()));
       }
-    )
+    } else {
+      unsafe {
+        gl_call!(gl::DrawArrays(gl::TRIANGLES, 0, self.vertices.len() as i32 / self.descriptor.stride));
+      }
+    }
+    VertexArrayObject::unbind();
+  }
+}
+
+impl<T: RenderDataPrimitive, U: RenderDataPrimitive> Drop for Mesh<T, U> {
+  fn drop(&mut self) {
+    self.vbo.delete();
+    
+    if let Some(ebo) = &mut self.ebo {
+      ebo.delete();
+    }
+    
+    self.vao.delete();
   }
 }

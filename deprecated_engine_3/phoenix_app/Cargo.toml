@@ -1,0 +1,7 @@
+[package]
+name = "phoenix_app"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+phoenix_core = { path = "../phoenix_core" }

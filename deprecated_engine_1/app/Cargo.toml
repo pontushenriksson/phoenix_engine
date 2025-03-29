@@ -1,0 +1,15 @@
+[package]
+name = "app"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+colored = "2.1.0"
+log = "0.4.22"
+fern = { version = "0.6.2", features = ["colored"] }
+gl = "0.14.0"
+glfw = "0.58.0"
+chrono = "0.4.38"
+cgmath = "0.18.0"
+egui = "0.29.1"
+# core = { path = "../core" }

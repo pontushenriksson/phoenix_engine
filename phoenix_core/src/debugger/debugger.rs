@@ -1,14 +1,3 @@
-#[derive(Debug)]
-pub enum PhoenixError {
-  EngineCreation(String),
-
-  Io(String),
-
-  GetAsset(String),
-  LoadAsset(String),
-  UnloadAsset(String),
-}
-
 pub struct Debugger;
 
 impl Debugger {
@@ -21,7 +10,7 @@ impl Debugger {
   pub fn check_errors(file: &str, line: u32) {
     let mut error = unsafe { gl::GetError() };
     while error != gl::NO_ERROR {
-      eprintln!("OpenGL Error (0x{:X}) at {}:{}", error, file, line);
+      eprintln!("OpenGL Error {} (0x{:X}) at {}:{}", error, error, file, line);
       error = unsafe { gl::GetError() };
     }
   }
