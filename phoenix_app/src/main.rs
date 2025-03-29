@@ -1,4 +1,4 @@
-mod config;
+use std::{process::Command, thread::sleep, time};
 use glfw::Context;
 use gl;
 
@@ -7,6 +7,8 @@ use crate::config::*;
 fn fail_on_errors(error: glfw::Error, description: String) {
     eprintln!("GLFW Error ({}): {}", error, description);
 }
+
+pub mod config;
 
 pub mod ui {
     pub mod themes;
@@ -87,6 +89,26 @@ fn main() {
                 // hud.draw();
                 
                 // Render game stuff
+
+                if /* Button "Build Project"*/ window.get_key(glfw::Key::Delete) == glfw::Action::Press {
+                    let output = Command::new("cargo")
+                        .arg("build")
+                        .arg("--release")
+                        .current_dir("../projects/phoenix-test-game")
+                        .output()
+                        .expect("Failed to execute build command for project!");
+
+                    if output.status.success() {
+                        println!("Build successful!");
+                    } else {
+                        eprintln!(
+                            "Build failed!:\n{}",
+                            String::from_utf8_lossy(&output.stderr)
+                        );
+                    }
+
+                    sleep(time::Duration::from_millis(1000));
+                }
             },
             PhoenixRunningMode::Game => {
                 // Render ui
