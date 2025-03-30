@@ -95,7 +95,7 @@ document.addEventListener('DOMContentLoaded', () => {
   const modalHTML = `
     <div class="modal-overlay">
       <div class="modal-popup">
-        <h2>create new project</h2>
+        <h2>Create new project</h2>
         <input type="text" id="newProjectName" placeholder="Enter project name">
         <div class="modal-buttons">
           <button id="createProjectBtn">Create</button>
