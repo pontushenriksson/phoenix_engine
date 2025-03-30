@@ -2,15 +2,15 @@
 
 # Phoenix Engine
 
-Phoenix är en simpel spelmotor skriven i programspråket Rust. Motorn nyttjar OpenGL för dess `rastrering` och Egui för dess gränsnitt. För oss är Phoenix ett perfekt projekt för att finslipa våra utvecklingskunskaper. Spelmotorn blir vårat gymnasiearbete på NTI Gymnasiet i Sundsvall 2024.
+Phoenix är en simpel spelmotor skriven i programspråket Rust. Motorn nyttjar OpenGL för dess `rastrering` och Tauri för dess gränsnitt. För oss är Phoenix ett perfekt projekt för att finslipa våra utvecklingskunskaper. Spelmotorn blir vårat gymnasiearbete på NTI Gymnasiet i Sundsvall 2024-2025.
 
 Under projektets gång kommer vi att lära oss mer om:
 
 1. Programspråket Rust.
-2. Grafisk programmering med OpenGL och Egui.
+2. Grafisk programmering med OpenGL och Tauri.
 3. Korrekt användning av GitHub issues, pull requests, merge requests och commits.
 
-Copyright © 2024 [Neo Mannskär](https://github.com/neomannskar) & [Pontus Henriksson](https://github.com/pontushenriksson)
+Copyright © 2025 [Neo Mannskär](https://github.com/neomannskar) & [Pontus Henriksson](https://github.com/pontushenriksson)
 
 ## Resurser
 
