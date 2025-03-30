@@ -79,6 +79,10 @@ body {
   font-weight: bold;
 }
 
+.toolbar ul a:hover {
+  color: var(--color-text);
+}
+
 /* Top bar */
 .topbar {
   grid-area: topbar;
@@ -94,14 +98,22 @@ body {
 }
 
 .topbar i:hover {
-  color: var(--color-accent-light);
+  color: var(--color-primary);
   cursor: pointer;
   transition: color 0.3s;
 }
 
-.topbar i:nth-child(2) {
-  color: #ff5337;
+.topbar i#pauseBtn,
+.topbar i#stopBtn {
   display: none;
+}
+
+.topbar i#pauseBtn {
+  color: var(--color-accent-light);
+}
+
+.topbar i#stopBtn {
+  color: var(--color-accent-dark);
 }
 
 /* Inspector panel */

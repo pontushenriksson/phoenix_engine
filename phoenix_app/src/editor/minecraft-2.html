@@ -14,7 +14,7 @@
       href="../../assets/icons/logo.ico"
       type="image/x-icon"
     />
-    <script type="module" src="../editor.js" defer></script>
+    <script type="module" src="../../editor.js" defer></script>
   </head>
   <body>
     <div class="container">
@@ -30,8 +30,9 @@
         </ul>
       </nav>
       <header class="topbar">
-        <i class="fa-solid fa-play"></i>
-        <i class="fa-solid fa-stop"></i>
+        <i class="fa-solid fa-play" id="playBtn"></i>
+        <i class="fa-solid fa-pause" id="pauseBtn"></i>
+        <i class="fa-solid fa-stop" id="stopBtn"></i>
       </header>
       <section class="files">Files</section>
       <div class="viewport">
@@ -39,6 +40,7 @@
           <video
             class="gameShowcaseVideo"
             src="../../assets/minecraft-2.mp4"
+            muted
           ></video>
         </div>
       </div>
