@@ -12,11 +12,16 @@
   --color-accent-dark: #ff300f;
   --color-accent-light: #ff932f;
   --color-text: #f5f5f5;
-  font-synthesis: none;
-  text-rendering: optimizeLegibility;
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
-  -webkit-text-size-adjust: 100%;
+}
+
+/* light theme override */
+body.light-theme {
+  --color-primary: #f9f5f0;
+  --color-secondary: #e8e2d7;
+  --color-alternative: #d6d1c4;
+  --color-accent-dark: #e76f51;
+  --color-accent-light: #f4a261;
+  --color-text: #2a2a2a;
 }
 
 body {
@@ -24,20 +29,19 @@ body {
   display: flex;
   flex-direction: column;
   align-items: center;
+  position: relative;
+  min-height: 100vh;
 }
 
 .container {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
   width: 100%;
   max-width: 2560px;
   margin: 0 auto;
-
-  &.main {
-    gap: 1.5rem;
-    padding: 1.5rem;
-  }
+  padding: 1.5rem;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1.5rem;
 }
 
 header#main {
@@ -45,170 +49,259 @@ header#main {
   flex-direction: column;
   align-items: center;
   gap: 1rem;
-  margin: 2rem 0 6rem 0;
+  margin-bottom: 3rem;
   color: var(--color-accent-dark);
+}
 
-  img {
-    height: 100%;
-    max-height: 8rem;
-    width: 100%;
-  }
+header#main img {
+  max-height: 8rem;
 }
 
 main#main {
   display: flex;
   flex-direction: column;
+  align-items: center;
   gap: 2rem;
-  align-items: center;
-
-  button#themeSwitcher {
-    width: 10rem;
-    height: 2rem;
-    background-color: var(--color-accent-light);
-    color: var(--color-secondary);
-    border: none;
-    box-shadow: none;
-    border-radius: 0.25rem;
-    cursor: pointer;
-
-    &:hover {
-      background-color: var(--color-alternative);
-      color: var(--color-text);
-      transition: 0.3s;
-    }
-  }
-
-  .projects {
-    display: flex;
-    flex-wrap: wrap;
-    justify-content: center;
-    gap: 1.5rem;
-    width: 100%;
-    max-width: 2560px;
-    margin: 0 auto;
-
-    .project {
-      flex: 0 0 325px;
-      height: 400px;
-      display: flex;
-      flex-direction: column;
-      justify-content: space-between;
-      gap: 0.5rem;
-      padding: 1.5rem;
-      border-radius: 1rem;
-      background-color: var(--color-secondary);
-      color: var(--color-accent-light);
-      box-shadow: 0 0 10px rgba(0, 0, 0, 0.5);
-
-      &#createProject {
-        cursor: pointer;
-        display: flex;
-        flex-direction: column;
-        justify-content: space-between;
-        align-items: center;
-        padding-top: 3rem;
-        color: var(--color-alternative);
-
-        &:hover {
-          color: var(--color-accent-light);
-          transition: 0.3s;
-        }
-
-        .createProjectIcon {
-          font-size: 16rem;
-        }
-      }
-
-      .top {
-        display: grid;
-        gap: 1rem;
-      }
-
-      img {
-        width: 100%;
-        height: auto;
-        aspect-ratio: 16 / 9;
-        object-fit: cover;
-        border-radius: 0.5rem;
-      }
-
-      h3 {
-        font-size: 1.5rem;
-      }
-
-      .bottom {
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-
-        a {
-          font-size: 1rem;
-          text-decoration: none;
-          padding: 0.5rem 2rem;
-          background-color: var(--color-accent-dark);
-          color: var(--color-text);
-          border-radius: 0.25rem;
-
-          &:hover {
-            background-color: transparent;
-            outline: 1px solid var(--color-accent-dark);
-            color: var(--color-accent-dark);
-            transition: 0.3s;
-          }
-        }
-
-        .projectSettingsIcon {
-          font-size: 1.75rem;
-          color: var(--color-text);
-
-          &:hover {
-            color: var(--color-accent-dark);
-            transition: 0.3s;
-            cursor: pointer;
-          }
-        }
-      }
-    }
-  }
 }
 
-nav.toolbar {
-  background-color: var(--color-secondary);
-  width: 100%;
-  height: 2.5rem;
+button#themeSwitcher {
+  width: 10rem;
+  height: 2rem;
+  background-color: var(--color-accent-light);
+  color: var(--color-secondary);
+  border: none;
+  border-radius: 0.25rem;
+  cursor: pointer;
+  transition: background-color 0.3s ease, transform 0.2s ease;
+}
+
+button#themeSwitcher:hover,
+button#themeSwitcher:focus {
+  background-color: var(--color-alternative);
+  transform: scale(1.05);
+}
+
+.projects {
   display: flex;
-  align-items: center;
-  padding: 0 1rem;
-  gap: 1rem;
-  color: var(--color-text);
-
-  .appInfo {
-    display: flex;
-    gap: 1rem;
-    align-items: center;
-
-    img {
-      height: 1.5rem;
-      width: auto;
-    }
-  }
-
-  ul {
-    display: flex;
-    flex-direction: column;
-    gap: 0.5rem;
-    list-style: none;
-
-    a {
-      text-decoration: none;
-      color: var(--color-text);
-    }
-  }
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 1.5rem;
+  width: 100%;
+  max-width: 2560px;
 }
 
-video.gameShowcaseVideo {
-  width: 75vw;
+.project {
+  flex: 0 0 325px;
+  height: 400px;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 1.5rem;
+  border-radius: 1rem;
+  background-color: var(--color-secondary);
+  color: var(--color-accent-light);
+  box-shadow: 0 0 10px rgba(0, 0, 0, 0.5);
+  transition: transform 0.3s, box-shadow 0.3s;
+}
+
+.project:hover {
+  transform: scale(1.03);
+  box-shadow: 0 8px 16px rgba(0, 0, 0, 0.6);
+}
+
+.createProjectIcon {
+  font-size: 16rem;
+}
+
+/* Inside project card */
+.project .top {
+  display: grid;
+  gap: 1rem;
+}
+
+.project .top img {
+  width: 100%;
   height: auto;
   aspect-ratio: 16 / 9;
+  object-fit: cover;
   border-radius: 0.5rem;
+}
+
+.project h3 {
+  font-size: 1.5rem;
+}
+
+.project .bottom {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.project .bottom a {
+  font-size: 1rem;
+  text-decoration: none;
+  padding: 0.5rem 2rem;
+  background-color: var(--color-accent-dark);
+  color: var(--color-text);
+  border-radius: 0.25rem;
+  transition: background-color 0.3s, color 0.3s;
+}
+
+.project .bottom a:hover,
+.project .bottom a:focus {
+  background-color: transparent;
+  outline: 1px solid var(--color-accent-dark);
+  color: var(--color-accent-dark);
+}
+
+.project .bottom .projectSettingsIcon {
+  font-size: 1.75rem;
+  color: var(--color-text);
+  transition: color 0.3s;
+  cursor: pointer;
+}
+
+.project .bottom .projectSettingsIcon:hover,
+.project .bottom .projectSettingsIcon:focus {
+  color: var(--color-accent-dark);
+}
+
+#createProject {
+  cursor: pointer;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  padding: 2rem;
+  color: var(--color-alternative);
+  border: 2px dashed var(--color-alternative);
+  transition: transform 0.3s, color 0.3s;
+}
+
+#createProject:hover {
+  transform: scale(1.05);
+  color: var(--color-accent-light);
+}
+
+/* Animation for new projects */
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.project.new {
+  animation: fadeIn 0.5s ease-out;
+}
+
+/* Popup */
+.modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.3s ease;
+  z-index: 1000;
+}
+
+.modal-overlay.active {
+  opacity: 1;
+  pointer-events: all;
+}
+
+.modal-popup {
+  background: var(--color-secondary);
+  padding: 2rem;
+  border-radius: 0.5rem;
+  width: 90%;
+  max-width: 400px;
+  text-align: center;
+  color: var(--color-text);
+  opacity: 0;
+  transform: translateY(-20px);
+  transition: opacity 0.3s ease, transform 0.3s ease;
+}
+
+.modal-popup.active {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+.modal-popup h2 {
+  margin-bottom: 1rem;
+  font-size: 1.5rem;
+}
+
+.modal-popup input {
+  width: 100%;
+  padding: 0.75rem;
+  border: 1px solid var(--color-alternative);
+  border-radius: 0.25rem;
+  margin-bottom: 1rem;
+  background: var(--color-primary);
+  color: var(--color-text);
+}
+
+.modal-buttons {
+  display: flex;
+  justify-content: space-around;
+  gap: 1rem;
+}
+
+.modal-buttons button {
+  padding: 0.5rem 1rem;
+  border: none;
+  border-radius: 0.25rem;
+  cursor: pointer;
+  transition: background-color 0.3s;
+  font-size: 1rem;
+}
+
+.modal-buttons button#createProjectBtn {
+  background-color: var(--color-accent-light);
+  color: var(--color-secondary);
+}
+
+.modal-buttons button#createProjectBtn:hover,
+.modal-buttons button#createProjectBtn:focus {
+  background-color: var(--color-accent-dark);
+  color: var(--color-text);
+}
+
+.modal-buttons button#cancelProjectBtn {
+  background-color: var(--color-accent-dark);
+  color: var(--color-text);
+}
+
+.modal-buttons button#cancelProjectBtn:hover,
+.modal-buttons button#cancelProjectBtn:focus {
+  background-color: var(--color-alternative);
+}
+
+/* Responsive styles */
+@media (max-width: 768px) {
+  .projects .project {
+    flex: 0 0 100%;
+  }
+
+  header#main {
+    margin-bottom: 2rem;
+  }
+
+  button#themeSwitcher {
+    width: 8rem;
+  }
 }

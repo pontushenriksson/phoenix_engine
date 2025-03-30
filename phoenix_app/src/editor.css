@@ -1,0 +1,196 @@
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+}
+
+:root {
+  --color-primary: #141419;
+  --color-secondary: #32323f;
+  --color-alternative: #4c4c5f;
+  --color-accent-dark: #ff300f;
+  --color-accent-light: #ff932f;
+  --color-text: #f5f5f5;
+}
+
+/* light theme override */
+body.light-theme {
+  --color-primary: #f9f5f0;
+  --color-secondary: #e8e2d7;
+  --color-alternative: #d6d1c4;
+  --color-accent-dark: #e76f51;
+  --color-accent-light: #f4a261;
+  --color-text: #2a2a2a;
+}
+
+body {
+  background-color: var(--color-primary);
+  color: var(--color-text);
+  overflow: hidden;
+  min-height: 100vh;
+}
+
+.container {
+  display: grid;
+  grid-template-areas:
+    'toolbar toolbar toolbar toolbar'
+    'topbar topbar topbar topbar'
+    'files viewport viewport inspector'
+    'debug debug terminal terminal';
+  grid-template-columns: 220px auto auto 220px;
+  grid-template-rows: 60px 50px auto 150px;
+  gap: 0.5rem;
+  height: 100vh;
+  padding: 0.5rem;
+}
+
+/* Toolbar */
+.toolbar {
+  grid-area: toolbar;
+  background-color: var(--color-secondary);
+  display: flex;
+  align-items: center;
+  padding: 0 1rem;
+  border-radius: 8px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+}
+
+.toolbar .appinfo {
+  display: flex;
+  align-items: center;
+}
+
+.toolbar .appinfo img {
+  height: 2rem;
+  margin-right: 0.5rem;
+  border-radius: 4px;
+}
+
+.toolbar ul {
+  margin-left: 2rem;
+  list-style: none;
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.toolbar ul span {
+  font-weight: bold;
+}
+
+/* Top bar */
+.topbar {
+  grid-area: topbar;
+  background-color: var(--color-alternative);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 2rem;
+  border-radius: 8px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+  font-size: 1.25rem;
+  text-transform: capitalize;
+}
+
+.topbar i:hover {
+  color: var(--color-accent-light);
+  cursor: pointer;
+  transition: color 0.3s;
+}
+
+.topbar i:nth-child(2) {
+  color: #ff5337;
+  display: none;
+}
+
+/* Inspector panel */
+.inspector {
+  grid-area: inspector;
+  background-color: var(--color-alternative);
+  padding: 1rem;
+  border-radius: 8px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+  overflow-y: auto;
+  text-transform: capitalize;
+}
+
+/* Files panel */
+.files {
+  grid-area: files;
+  background-color: var(--color-alternative);
+  padding: 1rem;
+  border-radius: 8px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+  overflow-y: auto;
+  text-transform: capitalize;
+}
+
+/* Debug panel */
+.debug {
+  grid-area: debug;
+  background-color: var(--color-secondary);
+  padding: 0.5rem 1rem;
+  border-radius: 8px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+  overflow-x: auto;
+  text-transform: capitalize;
+}
+
+/* Terminal panel */
+.terminal {
+  grid-area: terminal;
+  column-width: 75%;
+  background-color: var(--color-secondary);
+  border-radius: 8px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.5);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  padding: 0.5rem;
+}
+
+.terminal-output {
+  flex-grow: 1;
+  padding: 1rem;
+  overflow-y: auto;
+  font-family: 'Courier New', Courier, monospace;
+  font-size: 0.9rem;
+  color: var(--color-text);
+  background-color: var(--color-secondary);
+}
+
+/* Viewport panel */
+.viewport {
+  grid-area: viewport;
+  position: relative;
+  background-color: var(--color-primary);
+  border-radius: 8px;
+  overflow: hidden;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.5);
+}
+
+/* Video wrapper (Game preview) */
+.video-wrapper {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  border: 2px solid var(--color-accent-dark);
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+.gameShowcaseVideo {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+a {
+  color: var(--color-accent-light);
+  text-decoration: none;
+  transition: color 0.3s;
+}

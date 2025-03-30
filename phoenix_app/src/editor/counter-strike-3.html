@@ -2,57 +2,53 @@
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
-    <link rel="stylesheet" href="../styles.css" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Phoenix Engine v0.1.0</title>
-    <script
-      src="https://kit.fontawesome.com/7799275d96.js"
-      crossorigin="anonymous"
-    ></script>
-    <link
-      rel="shortcut icon"
-      href="../../assets/icons/logo.ico"
-      type="image/x-icon"
-    />
-    <script type="module" src="main.js" defer></script>
+    <title>Document</title>
+    <link rel="stylesheet" href="../styles.css" />
   </head>
-
   <body>
-    <div class="container">
-      <nav class="toolbar">
-        <div class="appInfo">
-          <img src="../../src-tauri/icons/icon.png" alt="Phoenix Logo" />
-          <span>Phoenix Engine</span>
-        </div>
-        <ul>
-          <span>File</span>
-          <li><a href="">Change project</a></li>
-          <li><a href="">Exit to main menu</a></li>
-        </ul>
-        <ul>
-          <li><a href=""></a></li>
-          <li><a href=""></a></li>
-          <li><a href=""></a></li>
-        </ul>
-        <ul>
-          <li><a href=""></a></li>
-          <li><a href=""></a></li>
-          <li><a href=""></a></li>
-        </ul>
-        <ul>
-          <li><a href=""></a></li>
-          <li><a href=""></a></li>
-          <li><a href=""></a></li>
-        </ul>
-      </nav>
-      <header class="topbar">topbar</header>
-      <section class="inspector">inspector</section>
-      <video
-        class="gameShowcaseVideo"
-        src="../content/counter-strike-3.webm"
-      ></video>
-      <section class="debug">debug</section>
-      <section class="files">files</section>
+    <style>
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+      }
+
+      div {
+        height: 100svh;
+        gap: 1rem;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        text-align: center;
+      }
+
+      p,
+      a {
+        text-decoration: none;
+        font-size: 6rem;
+        color: var(--color-text);
+      }
+
+      a {
+        padding: 0.25rem 1rem;
+        color: var(--color-accent-light);
+        border: 1px solid var(--color-accent-light);
+        font-size: 2rem;
+        border-radius: 1rem;
+      }
+
+      a:hover {
+        background-color: var(--color-accent-light);
+        color: var(--color-background);
+        transition: 0.3s;
+      }
+    </style>
+
+    <div class="bottom">
+      <p>Datorn är för trött för att visa denna sida 😴</p>
+      <a href="../index.html">Gå tillbaka</a>
     </div>
   </body>
 </html>
