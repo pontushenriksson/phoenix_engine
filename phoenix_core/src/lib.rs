@@ -1,31 +1,49 @@
 pub mod core;
 
 pub mod debugger {
-  pub mod debugger;
+    pub mod debugger;
 }
 
 pub mod events {
-  pub mod events;
+    pub mod events;
 }
 
 pub mod graphics {
-  pub mod buffers;
-  pub mod camera;
-  pub mod data;
-  pub mod material;
-  pub mod mesh;
-  pub mod renderer;
-  pub mod shaders;
-  pub mod texture;
-  pub mod window;
+    pub mod buffers;
+    pub mod camera;
+    pub mod data;
+    pub mod material;
+    pub mod mesh;
+    pub mod renderer;
+    pub mod shaders;
+    pub mod texture;
+    pub mod window;
+
+    // Re-exports to simplify imports in games
+    pub use buffers::*;
+    pub use camera::Camera;
+    pub use data::*;
+    pub use material::*;
+    pub use mesh::*;
+    pub use shaders::*;
+    pub use texture::*;
 }
 
 pub mod objects {
-  pub mod geometry;
-  pub mod lights;
-  pub mod objects;
-  pub mod transform;
+    pub mod geometry;
+    pub mod lights;
+    pub mod objects;
+    pub mod transform;
+
+    // Re-exports to simplify imports in games
+    pub use geometry::Ground;
+    pub use lights::PointLight;
+    pub use objects::GameObject;
+    pub use transform::Transform;
 }
+
+// Re-export the main application struct at the top level
+pub use core::PhoenixApplication;
 
 pub enum Cell<T> {
   Alive(T),
@@ -149,13 +167,11 @@ use tokio;
       (0.42, 1.2, 0.3)
     );
 
-    
     let ground_shader = ShaderProgram::new(
       "../shaders/ground.vert",
       "../shaders/ground.frag",
     );
 
-    
     let ground_height_map = Sampler2D::<Topography>::new(
       "../assets/textures/perlin noise.png",
       gl::RGBA,
