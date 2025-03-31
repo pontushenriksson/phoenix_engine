@@ -34,7 +34,7 @@
         <i class="fa-solid fa-pause" id="pauseBtn"></i>
         <i class="fa-solid fa-stop" id="stopBtn"></i>
       </header>
-      <section class="files">Files</section>
+      <section class="files"></section>
       <div class="viewport">
         <div class="video-wrapper">
           <video
@@ -44,11 +44,50 @@
           ></video>
         </div>
       </div>
-      <section class="inspector">Inspector</section>
-      <section class="debug">Debug</section>
+      <section class="inspector"></section>
+      <section class="debug">
+        <div class="terminal-output">
+          <p>
+            <span style="color: #44ce5b">[Runtime]</span> Add uniform Texture1
+            to hashmap
+          </p>
+          <p style="color: #ce4444">
+            OpenGL Error 1282 (0x502) at C:\dev\phoenix
+            engine\phoenix_engine\phoenix_core\src\graphics\shaders.rs:177
+          </p>
+          <p>
+            <span style="color: #44ce5b">[Runtime]</span> Add sampler to
+            material
+          </p>
+          <p><span style="color: #44ce5b">[Runtime]</span> Add game object</p>
+          <p><span style="color: #44ce5b">[Runtime]</span> Add game object</p>
+          <p><span style="color: #44ce5b">[Runtime]</span> Add game object</p>
+          <p><span style="color: #44ce5b">[Runtime]</span> Add ground</p>
+          <p><span style="color: #44ce5b">[Runtime]</span> Add camera</p>
+        </div>
+      </section>
       <section class="terminal">
-        <div class="terminal-output" id="terminal-output">
-          PS C:\dev\phoenix engine\phoenix_engine\projects\minecraft-2> _
+        <div class="terminal-output">
+          <p>
+            PS C:\dev\phoenix engine\phoenix_engine\projects\minecraft-2> cargo
+            run
+          </p>
+          <p>
+            <strong style="color: #44ce5b">Finished</strong>
+            <em>`dev`</em> profile [unoptimized + debuginfo] target(s) in 0.57s
+          </p>
+          <p>
+            <strong style="color: #44ce5b">Running</strong>
+            `target\debug\minecraft_2.exe`
+          </p>
+          <p>
+            ------------------------------------ Window
+            -------------------------------------
+          </p>
+          <p>Initializing glfw ...</p>
+          <p>Initializing window ...</p>
+          <p>Loading window icon: ./assets/icons/icon.png ...</p>
+          <p>Loading OpenGL ...</p>
         </div>
       </section>
     </div>

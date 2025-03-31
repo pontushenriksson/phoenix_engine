@@ -125,6 +125,7 @@ body {
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
   overflow-y: auto;
   text-transform: capitalize;
+  background-image: url('../assets/inspector.png');
 }
 
 /* Files panel */
@@ -136,6 +137,7 @@ body {
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
   overflow-y: auto;
   text-transform: capitalize;
+  background-image: url('../assets/files.png');
 }
 
 /* Debug panel */
