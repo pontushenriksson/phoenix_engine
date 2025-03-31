@@ -94,6 +94,7 @@ async fn main() {
             scale: cgmath::vec3(0.5, 0.5, 0.5), 
         }
     );
+
     let pyramid_3 = GameObject::new(mesh, material).with_transform(
         Transform {
             translation: cgmath::vec3(1.0, 0.0, 0.5),
@@ -150,6 +151,7 @@ async fn main() {
 
     app.add_game_object(pyramid);
     app.add_game_object(pyramid_2);
+    app.add_game_object(pyramid_3);
     app.add_ground(ground);
     app.add_camera(camera);
 
