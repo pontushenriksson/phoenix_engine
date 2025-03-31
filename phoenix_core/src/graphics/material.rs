@@ -4,6 +4,7 @@ use crate::graphics::{
   texture::Sampler
 };
 
+#[derive(Clone)]
 pub struct Material {
   pub shader: ShaderProgram,
   pub samplers: Vec<Box<dyn Sampler>>,
