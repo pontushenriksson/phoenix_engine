@@ -2,9 +2,9 @@
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
-    <link rel="stylesheet" href="styles.css" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Phoenix Engine v0.1.0</title>
+    <link rel="stylesheet" href="styles.css" />
     <script
       src="https://kit.fontawesome.com/7799275d96.js"
       crossorigin="anonymous"
@@ -20,48 +20,63 @@
   <body>
     <div class="container main">
       <header id="main">
-        <img src="./assets/logomark.svg" alt="" />
+        <img src="./assets/logomark.svg" alt="Phoenix Engine Logo" />
         <p>Version: v0.1.0</p>
       </header>
-      <main id="main">
-        <button id="themeSwitcher">Byt tema</button>
 
-        <div class="projects">
+      <main id="main">
+        <button id="themeSwitcher">Switch theme</button>
+
+        <section class="projects">
+          <!-- Create Project -->
           <div id="createProject" class="project">
             <i class="createProjectIcon fa-solid fa-circle-plus"></i>
-            <h3>Skapa nytt projekt</h3>
+            <h3>Create new project</h3>
           </div>
-          <div class="project">
+
+          <!-- Existing Projects -->
+          <article class="project">
             <div class="top">
-              <img src="./assets/thumbnails/counter-strike-3.jpg" alt="" />
+              <img
+                src="./assets/thumbnails/counter-strike-3.jpg"
+                alt="Counter-Strike 3 Thumbnail"
+              />
               <h3>Counter-Strike 3</h3>
             </div>
             <div class="bottom">
-              <a href="./editor/counter-strike-3.html">Öppna projekt</a>
+              <a href="./editor/counter-strike-3.html">Open project</a>
               <i class="projectSettingsIcon fa-solid fa-gear"></i>
             </div>
-          </div>
-          <div class="project">
+          </article>
+
+          <article class="project">
             <div class="top">
-              <img src="./assets/thumbnails/minecraft-2.jpg" alt="" />
+              <img
+                src="./assets/thumbnails/minecraft-2.jpg"
+                alt="Minecraft 2 Thumbnail"
+              />
               <h3>Minecraft 2</h3>
             </div>
             <div class="bottom">
-              <a href="./editor/minecraft-2.html">Öppna projekt</a>
+              <a href="./editor/minecraft-2.html">Open project</a>
               <i class="projectSettingsIcon fa-solid fa-gear"></i>
             </div>
-          </div>
-          <div class="project">
+          </article>
+
+          <article class="project">
             <div class="top">
-              <img src="./assets/thumbnails/fortnite-2.jpg" alt="" />
+              <img
+                src="./assets/thumbnails/fortnite-2.jpg"
+                alt="Fortnite 2 Thumbnail"
+              />
               <h3>Fortnite 2</h3>
             </div>
             <div class="bottom">
-              <a href="./editor/fortnite-2.html">Öppna projekt</a>
+              <a href="./editor/fortnite-2.html">Open project</a>
               <i class="projectSettingsIcon fa-solid fa-gear"></i>
             </div>
-          </div>
-        </div>
+          </article>
+        </section>
       </main>
     </div>
   </body>

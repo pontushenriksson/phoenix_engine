@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <link rel="stylesheet" href="../editor.css" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Phoenix Engine v0.1.0</title>
+    <script
+      src="https://kit.fontawesome.com/7799275d96.js"
+      crossorigin="anonymous"
+    ></script>
+    <link
+      rel="shortcut icon"
+      href="../../assets/icons/logo.ico"
+      type="image/x-icon"
+    />
+    <script type="module" src="../../editor.js" defer></script>
+  </head>
+  <body>
+    <div class="container">
+      <nav class="toolbar">
+        <div class="appinfo">
+          <img src="../../assets/icon.png" alt="Phoenix Logo" />
+          <span>Phoenix Engine</span>
+        </div>
+        <ul>
+          <span>File</span>
+          <li><a href="../index.html">Change project</a></li>
+          <li><a href="../index.html">Exit to main menu</a></li>
+        </ul>
+      </nav>
+      <header class="topbar">
+        <i class="fa-solid fa-play" id="playBtn"></i>
+        <i class="fa-solid fa-pause" id="pauseBtn"></i>
+        <i class="fa-solid fa-stop" id="stopBtn"></i>
+      </header>
+      <section class="files">Files</section>
+      <div class="viewport">
+        <div class="video-wrapper">
+          <video
+            class="gameShowcaseVideo"
+            src="../../assets/minecraft-2.mp4"
+            muted
+          ></video>
+        </div>
+      </div>
+      <section class="inspector">Inspector</section>
+      <section class="debug">Debug</section>
+      <section class="terminal">
+        <div class="terminal-output" id="terminal-output">
+          PS C:\Users\neo.mannskar\OneDrive -
+          Academedia\Desktop\phoenix_engine\projects\minecraft-2> _
+        </div>
+      </section>
+    </div>
+  </body>
+</html>
