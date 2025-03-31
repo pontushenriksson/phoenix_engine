@@ -8,9 +8,12 @@ use cgmath::One;
 
 #[tokio::main]
 async fn main() {
+    let width = 1920;
+    let height = 1080;
+
     let mut app = PhoenixApplication::new(
-        1280,
-        720,
+        width,
+        height,
         "Minecraft 2",
         "Z:/dev/phoenix/phoenix_engine/projects/minecraft_2/assets/icons/icon.png",
     ).unwrap();
@@ -49,6 +52,7 @@ async fn main() {
         Some(indices.to_vec()),
         descriptor,
     );
+    
 
     let shader = ShaderProgram::new(
         "Z:/dev/phoenix/phoenix_engine/projects/minecraft_2/assets/materials/planks/shaders/planks.vert",
@@ -83,13 +87,6 @@ async fn main() {
     // material.set_ubo_data();
 
     let game_object = GameObject::new(mesh, material).with_transform(Transform::identity());
-
-    let light = PointLight::new(
-        Transform::identity(),
-        cgmath::vec3(1.0 ,1.0 , 1.0),
-        0.95,
-        (0.42, 1.2, 0.3)
-    );
 
     let ground_shader = ShaderProgram::new(
         "Z:/dev/phoenix/phoenix_engine/projects/minecraft_2/shaders/ground.vert",
@@ -126,11 +123,9 @@ async fn main() {
     );
 
     let camera = Camera::new(
-        // 1280,
-        // 720,
-        1920,
-        1080,
-        (1280.0 / 720.0) as f32,
+        width,
+        height,
+        (width / height) as f32,
         cgmath::point3(0.0, 0.0, 3.0),
         45.0,
         0.1,
@@ -140,7 +135,6 @@ async fn main() {
     );
 
     app.add_game_object(game_object);
-    app.add_pointlight(light);
     app.add_ground(ground);
     app.add_camera(camera);
 

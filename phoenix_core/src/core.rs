@@ -1,4 +1,7 @@
-use std::sync::{Arc, Mutex};
+use std::{
+  process::exit,
+  sync::{Arc, Mutex}
+};
 
 use cgmath::Rotation3;
 use glfw::{Context, Glfw};
@@ -227,5 +230,9 @@ impl PhoenixApplication {
 
       print!("[Runtime] Running at {:.1} fps\r", target_fps);
     }
+    
+    println!("[Runtime] Running at {:.1} fps", target_fps);
+
+    exit(0);
   }
 }
