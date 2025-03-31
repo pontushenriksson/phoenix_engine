@@ -1,6 +1,7 @@
 use crate::gl_call;
 use crate::debugger::debugger::Debugger;
 
+#[derive(Clone)]
 pub struct UniformBufferObject {
   id: gl::types::GLuint,
   size: gl::types::GLintptr,

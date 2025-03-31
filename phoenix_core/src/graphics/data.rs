@@ -36,7 +36,7 @@ impl RenderDataPrimitive for f32 {
   }
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct VertexBufferObject {
   id: gl::types::GLuint,
   usage: gl::types::GLenum,
@@ -91,7 +91,7 @@ impl VertexBufferObject {
   }
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct ElementBufferObject {
   id: gl::types::GLuint,
   usage: gl::types::GLenum,
@@ -222,12 +222,13 @@ impl AttributeBuilder {
   }
 }
 
+#[derive(Clone)]
 pub struct VertexDescriptor {
   pub attributes: Vec<Attribute>,
   pub stride: i32,
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct VertexArrayObject(gl::types::GLuint);
 
 impl VertexArrayObject {

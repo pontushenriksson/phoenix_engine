@@ -15,7 +15,4 @@ gltf = "1.4.1"
 image = "0.25.5"
 rayon = "1.10.0"
 tokio = { version = "1.42.0", features = ["full"] }
-phoenix_core = { path = "Z:/dev/phoenix/phoenix_engine/phoenix_core" }
-
-[build]
-rustflags = ["-Awarnings"]
+phoenix_core = { path = "../../phoenix_core" }

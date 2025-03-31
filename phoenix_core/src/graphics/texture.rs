@@ -3,7 +3,6 @@ use image::GenericImageView;
 use crate::gl_call;
 use crate::debugger::debugger::Debugger;
 
-#[allow(dead_code)]
 #[derive(Debug, Clone)]
 pub struct Texture {
   id: gl::types::GLuint,
@@ -92,37 +91,47 @@ pub struct Specular;
 #[derive(Debug, Clone)]
 pub struct Topography;
 
-pub trait Sampler {
+pub trait Sampler: Send + Sync {
   fn new(
     file_path: &str,
     format: gl::types::GLenum,
-    pixel_image: gl::types::GLenum
-  ) -> Box<Self> where Self: Sized;
+    pixel_image: gl::types::GLenum,
+  ) -> Box<Self>
+  where
+    Self: Sized;
 
   fn bind(&self, unit: gl::types::GLuint);
-
   fn unbind(&self);
+  fn clone_box(&self) -> Box<dyn Sampler>;
+}
+
+// Implement Clone for Box<dyn Sampler>
+impl Clone for Box<dyn Sampler> {
+  fn clone(&self) -> Box<dyn Sampler> {
+    self.clone_box()
+  }
 }
 
 #[derive(Debug, Clone)]
-pub struct Sampler2D<T> {
+pub struct Sampler2D<T>
+  where T: Clone {
   texture: Texture,
   _marker: std::marker::PhantomData<T>,
 }
 
-impl<T> Sampler for Sampler2D<T> {
+// Explicitly add `where T: 'static + Send + Sync`
+impl<T: 'static + Send + Sync> Sampler for Sampler2D<T>
+  where T: Clone {
   fn new(
     file_path: &str,
     format: gl::types::GLenum,
     pixel_type: gl::types::GLenum,
-  ) -> Box<Sampler2D<T>> {
+  ) -> Box<Self> {
     let texture = Texture::new(file_path, gl::TEXTURE_2D, format, pixel_type);
-    Box::new(
-      Sampler2D {
-        texture,
-        _marker: std::marker::PhantomData
-      }
-    )
+    Box::new(Sampler2D {
+      texture,
+      _marker: std::marker::PhantomData,
+    })
   }
 
   fn bind(&self, unit: gl::types::GLuint) {
@@ -135,14 +144,21 @@ impl<T> Sampler for Sampler2D<T> {
       gl_call!(gl::BindTexture(gl::TEXTURE_2D, 0));
     }
   }
+
+  fn clone_box(&self) -> Box<dyn Sampler> {
+    Box::new((*self).clone())
+  }
 }
 
-pub struct Sampler3D<T> {
+#[derive(Clone)]
+pub struct Sampler3D<T>
+  where T: Clone {
   texture: Texture,
   _marker: std::marker::PhantomData<T>
 }
 
-impl<T> Sampler for Sampler3D<T> {
+impl<T: 'static + Send + Sync> Sampler for Sampler3D<T>
+  where T: Clone {
   fn new(
     file_path: &str,
     format: gl::types::GLenum,
@@ -166,5 +182,9 @@ impl<T> Sampler for Sampler3D<T> {
       gl_call!(gl::ActiveTexture(gl::TEXTURE0));
       gl_call!(gl::BindTexture(gl::TEXTURE_3D, 0));
     }
+  }
+
+  fn clone_box(&self) -> Box<dyn Sampler> {
+    Box::new((*self).clone())
   }
 }

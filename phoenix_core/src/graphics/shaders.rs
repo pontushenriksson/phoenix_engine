@@ -3,6 +3,8 @@ use std::io::Read;
 
 use crate::gl_call;
 use crate::debugger::debugger::Debugger;
+
+#[derive(Clone)]
 pub struct ShaderProgram {
   id: gl::types::GLuint,
   pub uniforms: std::collections::HashMap<String, gl::types::GLint>,

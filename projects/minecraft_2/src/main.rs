@@ -15,7 +15,7 @@ async fn main() {
         width,
         height,
         "Minecraft 2",
-        "Z:/dev/phoenix/phoenix_engine/projects/minecraft_2/assets/icons/icon.png",
+        "./assets/icons/icon.png",
     ).unwrap();
 
     let vertices: [gl::types::GLfloat; 60] = [
@@ -55,18 +55,18 @@ async fn main() {
     
 
     let shader = ShaderProgram::new(
-        "Z:/dev/phoenix/phoenix_engine/projects/minecraft_2/assets/materials/planks/shaders/planks.vert",
-        "Z:/dev/phoenix/phoenix_engine/projects/minecraft_2/assets/materials/planks/shaders/planks.frag",
+        "./assets/materials/planks/shaders/planks.vert",
+        "./assets/materials/planks/shaders/planks.frag",
     );
 
     let diffuse = Sampler2D::<Diffuse>::new(
-        "Z:/dev/phoenix/phoenix_engine/projects/minecraft_2/assets/materials/planks/textures/diffuse.png",
+        "./assets/materials/planks/textures/diffuse.png",
         gl::RGBA,
         gl::UNSIGNED_BYTE
     );
     
     let specular = Sampler2D::<Specular>::new(
-        "Z:/dev/phoenix/phoenix_engine/projects/minecraft_2/assets/materials/planks/textures/specular.png",
+        "./assets/materials/planks/textures/specular.png",
         gl::RGBA,
         gl::UNSIGNED_BYTE
     );
@@ -86,21 +86,35 @@ async fn main() {
 
     // material.set_ubo_data();
 
-    let game_object = GameObject::new(mesh, material).with_transform(Transform::identity());
+    let pyramid = GameObject::new(mesh.clone(), material.clone()).with_transform(Transform::identity());
+    let pyramid_2 = GameObject::new(mesh.clone(), material.clone()).with_transform(
+        Transform {
+            translation: cgmath::vec3(1.0, 0.5, 0.5),
+            rotation: cgmath::Quaternion::one(),
+            scale: cgmath::vec3(0.5, 0.5, 0.5), 
+        }
+    );
+    let pyramid_3 = GameObject::new(mesh, material).with_transform(
+        Transform {
+            translation: cgmath::vec3(1.0, 0.0, 0.5),
+            rotation: cgmath::Quaternion::one(),
+            scale: cgmath::vec3(1.0, 1.0, 1.0), 
+        }
+    );
 
     let ground_shader = ShaderProgram::new(
-        "Z:/dev/phoenix/phoenix_engine/projects/minecraft_2/shaders/ground.vert",
-        "Z:/dev/phoenix/phoenix_engine/projects/minecraft_2/shaders/ground.frag",
+        "./shaders/ground.vert",
+        "./shaders/ground.frag",
     );
 
     let ground_height_map = Sampler2D::<Topography>::new(
-        "Z:/dev/phoenix/phoenix_engine/projects/minecraft_2/assets/textures/perlin noise.png",
+        "./assets/textures/perlin noise.png",
         gl::RGBA,
         gl::UNSIGNED_BYTE
     );
 
     let ground_texture = Sampler2D::<Diffuse>::new(
-        "Z:/dev/phoenix/phoenix_engine/projects/minecraft_2/assets/textures/bricks texture.jpg",
+        "./assets/textures/bricks texture.jpg",
         gl::RGBA,
         gl::UNSIGNED_BYTE
     );
@@ -116,9 +130,9 @@ async fn main() {
 
     let ground = Ground::new(64, 64, ground_material).with_transform(
         Transform {
-            translation: cgmath::vec3(0.0, 0.2, 0.0),
+            translation: cgmath::vec3(0.0, 0.3, 0.0),
             rotation: cgmath::Quaternion::one(),
-            scale: cgmath::vec3(1.0, 1.0, 1.0),
+            scale: cgmath::vec3(3.0, 3.0, 3.0),
         }
     );
 
@@ -134,7 +148,8 @@ async fn main() {
         100.0,
     );
 
-    app.add_game_object(game_object);
+    app.add_game_object(pyramid);
+    app.add_game_object(pyramid_2);
     app.add_ground(ground);
     app.add_camera(camera);
 

@@ -21,6 +21,7 @@ impl BufferType {
   }
 }
 
+#[derive(Clone)]
 pub struct Mesh<T: RenderDataPrimitive, U: RenderDataPrimitive> {
   // Render data
   vao: VertexArrayObject,
